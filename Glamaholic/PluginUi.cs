@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using FFXIVClientStructs.FFXIV.Client.System.Framework;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Glamaholic.Ui;
 using Glamaholic.Ui.Helpers;
 using ImGuiScene;
@@ -64,6 +66,21 @@ namespace Glamaholic {
 
         internal void SwitchPlate(int idx, bool scrollTo = false) {
             this.MainInterface.SwitchPlate(idx, scrollTo);
+        }
+
+        internal unsafe void TryOn(IEnumerable<SavedGlamourItem> items) {
+            void SetTryOnSave(bool save) {
+                var tryOnAgent = (IntPtr) Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.Tryon);
+                if (tryOnAgent != IntPtr.Zero) {
+                    *(byte*) (tryOnAgent + 0x2E2) = (byte) (save ? 1 : 0);
+                }
+            }
+
+            SetTryOnSave(false);
+            foreach (var mirage in items) {
+                this.Plugin.Functions.TryOn(mirage.ItemId, mirage.StainId);
+                SetTryOnSave(true);
+            }
         }
     }
 }

@@ -5,8 +5,6 @@ using System.Linq;
 using System.Numerics;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
-using FFXIVClientStructs.FFXIV.Client.System.Framework;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using Newtonsoft.Json;
@@ -326,7 +324,7 @@ namespace Glamaholic.Ui {
 
             ImGui.EndPopup();
         }
-        
+
         private unsafe void DrawItemPopup(string itemPopup, SavedPlate plate, PlateSlot slot) {
             if (!ImGui.BeginPopup(itemPopup)) {
                 return;
@@ -485,7 +483,7 @@ namespace Glamaholic.Ui {
             ImGui.EndTable();
         }
 
-        private unsafe void DrawPlateButtons(SavedPlate plate) {
+        private void DrawPlateButtons(SavedPlate plate) {
             if (this._editing || !ImGui.BeginTable("plate buttons", 5, ImGuiTableFlags.SizingFixedFit)) {
                 return;
             }
@@ -497,18 +495,7 @@ namespace Glamaholic.Ui {
 
             ImGui.TableNextColumn();
             if (Util.IconButton(FontAwesomeIcon.Search, tooltip: "Try on")) {
-                void SetTryOnSave(bool save) {
-                    var tryOnAgent = (IntPtr) Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.Tryon);
-                    if (tryOnAgent != IntPtr.Zero) {
-                        *(byte*) (tryOnAgent + 0x2E2) = (byte) (save ? 1 : 0);
-                    }
-                }
-
-                SetTryOnSave(false);
-                foreach (var mirage in plate.Items.Values) {
-                    this.Ui.Plugin.Functions.TryOn(mirage.ItemId, mirage.StainId);
-                    SetTryOnSave(true);
-                }
+                this.Ui.TryOn(plate.Items.Values);
             }
 
             ImGui.TableNextColumn();

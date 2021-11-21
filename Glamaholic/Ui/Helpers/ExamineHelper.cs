@@ -1,4 +1,5 @@
-﻿using Dalamud.Interface;
+﻿using System.Collections.Generic;
+using Dalamud.Interface;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
@@ -38,52 +39,77 @@ namespace Glamaholic.Ui.Helpers {
             ImGui.SetNextItemWidth(ImGui.CalcTextSize(this.Ui.Plugin.Name).X + ImGui.GetStyle().ItemInnerSpacing.X * 2 + 32 * ImGuiHelpers.GlobalScale);
             if (ImGui.BeginCombo("##glamaholic-helper-examine-combo", this.Ui.Plugin.Name)) {
                 if (ImGui.Selectable("Create glamour plate")) {
-                    void DoIt() {
-                        var inventory = InventoryManager.Instance()->GetInventoryContainer(InventoryType.Examine);
-                        if (inventory == null) {
-                            return;
-                        }
+                    this.CopyToGlamourPlate();
+                }
 
-                        var name = this.Ui.Plugin.Functions.ExamineName;
-                        if (string.IsNullOrEmpty(name)) {
-                            name = "Copied glamour";
-                        }
-
-                        var plate = new SavedPlate(name);
-                        for (var i = 0; i < inventory->Size; i++) {
-                            var item = inventory->Items[i];
-                            var itemId = item.GlamourID;
-                            if (itemId == 0) {
-                                itemId = item.ItemID;
-                            }
-
-                            if (itemId == 0) {
-                                continue;
-                            }
-
-                            var stainId = item.Stain;
-
-                            // TODO: remove this logic in endwalker
-                            var slot = i > 5 ? i - 1 : i;
-                            plate.Items[(PlateSlot) slot] = new SavedGlamourItem {
-                                ItemId = itemId,
-                                StainId = stainId,
-                            };
-                        }
-
-                        this.Ui.Plugin.Config.AddPlate(plate);
-                        this.Ui.Plugin.SaveConfig();
-                        this.Ui.OpenMainInterface();
-                        this.Ui.SwitchPlate(this.Ui.Plugin.Config.Plates.Count - 1, true);
+                if (ImGui.Selectable("Try on")) {
+                    var items = GetItems();
+                    if (items != null) {
+                        this.Ui.TryOn(items.Values);
                     }
-
-                    DoIt();
                 }
 
                 ImGui.EndCombo();
             }
 
             ImGui.End();
+        }
+
+        private static unsafe Dictionary<PlateSlot, SavedGlamourItem>? GetItems() {
+            var inventory = InventoryManager.Instance()->GetInventoryContainer(InventoryType.Examine);
+            if (inventory == null) {
+                return null;
+            }
+
+            var items = new Dictionary<PlateSlot, SavedGlamourItem>();
+            for (var i = 0; i < inventory->Size && i < (int) (PlateSlot.LeftRing + 2); i++) {
+                var item = inventory->Items[i];
+                var itemId = item.GlamourID;
+                if (itemId == 0) {
+                    itemId = item.ItemID;
+                }
+
+                if (itemId == 0) {
+                    continue;
+                }
+
+                var stainId = item.Stain;
+
+                // TODO: remove this logic in endwalker
+                var slot = i > 5 ? i - 1 : i;
+                items[(PlateSlot) slot] = new SavedGlamourItem {
+                    ItemId = itemId,
+                    StainId = stainId,
+                };
+            }
+
+            return items;
+        }
+
+        private unsafe void CopyToGlamourPlate() {
+            var inventory = InventoryManager.Instance()->GetInventoryContainer(InventoryType.Examine);
+            if (inventory == null) {
+                return;
+            }
+
+            var name = this.Ui.Plugin.Functions.ExamineName;
+            if (string.IsNullOrEmpty(name)) {
+                name = "Copied glamour";
+            }
+
+            var items = GetItems();
+            if (items == null) {
+                return;
+            }
+
+            var plate = new SavedPlate(name) {
+                Items = items,
+            };
+
+            this.Ui.Plugin.Config.AddPlate(plate);
+            this.Ui.Plugin.SaveConfig();
+            this.Ui.OpenMainInterface();
+            this.Ui.SwitchPlate(this.Ui.Plugin.Config.Plates.Count - 1, true);
         }
     }
 }
