@@ -78,6 +78,10 @@ namespace Glamaholic {
 
             SetTryOnSave(false);
             foreach (var mirage in items) {
+                if (mirage.ItemId == 0) {
+                    continue;
+                }
+                
                 this.Plugin.Functions.TryOn(mirage.ItemId, mirage.StainId);
                 SetTryOnSave(true);
             }

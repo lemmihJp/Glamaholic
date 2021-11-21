@@ -18,17 +18,20 @@ namespace Glamaholic {
         private static class Signatures {
             internal const string SetGlamourPlateSlot = "E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8B 46 10";
             internal const string ModifyGlamourPlateSlot = "48 89 74 24 ?? 57 48 83 EC 20 80 79 30 00";
+            internal const string ClearGlamourPlateSlot = "80 79 30 00 4C 8B C1";
             internal const string IsInArmoire = "E8 ?? ?? ?? ?? 84 C0 74 16 8B CB";
             internal const string ArmoirePointer = "48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 84 C0 74 16 8B CB E8";
             internal const string TryOn = "E8 ?? ?? ?? ?? EB 35 BA";
             internal const string ExamineNamePointer = "48 8D 05 ?? ?? ?? ?? 48 89 85 ?? ?? ?? ?? 74 56 49 8B 4F";
         }
 
-        internal delegate void SetGlamourPlateSlotDelegate(IntPtr agent, MirageSource mirageSource, int glamId, uint itemId, byte stainId);
+        private delegate void SetGlamourPlateSlotDelegate(IntPtr agent, MirageSource mirageSource, int glamId, uint itemId, byte stainId);
 
-        internal delegate void ModifyGlamourPlateSlotDelegate(IntPtr agent, PlateSlot slot, byte stainId, IntPtr numbers, int stainItemId);
+        private delegate void ModifyGlamourPlateSlotDelegate(IntPtr agent, PlateSlot slot, byte stainId, IntPtr numbers, int stainItemId);
 
-        internal delegate byte IsInArmoireDelegate(IntPtr armoire, int index);
+        private delegate void ClearGlamourPlateSlotDelegate(IntPtr agent, PlateSlot slot);
+
+        private delegate byte IsInArmoireDelegate(IntPtr armoire, int index);
 
         private delegate byte TryOnDelegate(uint unknownCanEquip, uint itemBaseId, ulong stainColor, uint itemGlamourId, byte unknownByte);
 
@@ -36,6 +39,7 @@ namespace Glamaholic {
 
         private readonly SetGlamourPlateSlotDelegate _setGlamourPlateSlot;
         private readonly ModifyGlamourPlateSlotDelegate _modifyGlamourPlateSlot;
+        private readonly ClearGlamourPlateSlotDelegate _clearGlamourPlateSlot;
         private readonly IsInArmoireDelegate _isInArmoire;
         private readonly IntPtr _armoirePtr;
         private readonly TryOnDelegate _tryOn;
@@ -48,6 +52,7 @@ namespace Glamaholic {
 
             this._setGlamourPlateSlot = Marshal.GetDelegateForFunctionPointer<SetGlamourPlateSlotDelegate>(this.Plugin.SigScanner.ScanText(Signatures.SetGlamourPlateSlot));
             this._modifyGlamourPlateSlot = Marshal.GetDelegateForFunctionPointer<ModifyGlamourPlateSlotDelegate>(this.Plugin.SigScanner.ScanText(Signatures.ModifyGlamourPlateSlot));
+            this._clearGlamourPlateSlot = Marshal.GetDelegateForFunctionPointer<ClearGlamourPlateSlotDelegate>(this.Plugin.SigScanner.ScanText(Signatures.ClearGlamourPlateSlot));
             this._isInArmoire = Marshal.GetDelegateForFunctionPointer<IsInArmoireDelegate>(this.Plugin.SigScanner.ScanText(Signatures.IsInArmoire));
             this._armoirePtr = this.Plugin.SigScanner.GetStaticAddressFromSig(Signatures.ArmoirePointer);
             this._tryOn = Marshal.GetDelegateForFunctionPointer<TryOnDelegate>(this.Plugin.SigScanner.ScanText(Signatures.TryOn));
@@ -188,6 +193,12 @@ namespace Glamaholic {
                         continue;
                     }
                 }
+                
+                *slotPtr = slot;
+                if (item.ItemId == 0) {
+                    this._clearGlamourPlateSlot((IntPtr) agent, slot);
+                    continue;
+                }
 
                 var source = MirageSource.GlamourDresser;
                 var info = (0, 0u, (byte) 0);
@@ -214,7 +225,6 @@ namespace Glamaholic {
                     continue;
                 }
 
-                *slotPtr = slot;
                 this._setGlamourPlateSlot(
                     (IntPtr) agent,
                     source,

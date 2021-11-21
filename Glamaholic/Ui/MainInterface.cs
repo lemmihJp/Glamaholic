@@ -340,13 +340,20 @@ namespace Glamaholic.Ui {
             }
 
             if (ImGui.BeginChild("item search", new Vector2(250, 450), false, ImGuiWindowFlags.HorizontalScrollbar)) {
-                var id = 0u;
+                uint? id;
                 if (plate.Items.TryGetValue(slot, out var slotMirage)) {
                     id = slotMirage.ItemId;
+                } else {
+                    id = null;
                 }
 
-                if (ImGui.Selectable("None", id == 0)) {
+                if (ImGui.Selectable("None (keep existing)", id == null)) {
                     plate.Items.Remove(slot);
+                    ImGui.CloseCurrentPopup();
+                }
+
+                if (ImGui.Selectable("None (remove existing)", id == 0)) {
+                    plate.Items[slot] = new SavedGlamourItem();
                     ImGui.CloseCurrentPopup();
                 }
 
@@ -388,7 +395,7 @@ namespace Glamaholic.Ui {
             var borderColour = *ImGui.GetStyleColorVec4(ImGuiCol.Border);
 
             // check for item
-            if (mirage != null && editingPlate) {
+            if (mirage != null && mirage.ItemId != 0 && editingPlate) {
                 var has = GameFunctions.DresserContents.Any(saved => saved.ItemId % 1_000_000 == mirage.ItemId) || this.Ui.Plugin.Functions.IsInArmoire(mirage.ItemId);
                 if (!has) {
                     borderColour = ImGuiColors.DalamudYellow;
@@ -401,7 +408,7 @@ namespace Glamaholic.Ui {
             ImGui.InvisibleButton($"preview {slot}", new Vector2(iconSize + paddingSize));
             var cursorAfter = ImGui.GetCursorPos();
 
-            if (mirage != null) {
+            if (mirage != null && mirage.ItemId != 0) {
                 var item = this.Ui.Plugin.DataManager.GetExcelSheet<Item>()!.GetRow(mirage.ItemId);
                 if (item != null) {
                     var icon = this.Ui.GetIcon(item.Icon);
@@ -431,6 +438,19 @@ namespace Glamaholic.Ui {
                         tooltip += $"\n{item.Name}{stainName}";
                     }
                 }
+            } else if (mirage != null) {
+                // remove
+                ImGui.GetWindowDrawList().AddLine(
+                    drawCursor + new Vector2(paddingSize / 2f),
+                    drawCursor + new Vector2(paddingSize / 2f) + new Vector2(iconSize),
+                    ImGui.ColorConvertFloat4ToU32(ImGui.GetStyle().Colors[(int) ImGuiCol.Text])
+                );
+                
+                ImGui.GetWindowDrawList().AddLine(
+                    drawCursor + new Vector2(paddingSize / 2f) + new Vector2(iconSize, 0),
+                    drawCursor + new Vector2(paddingSize / 2f) + new Vector2(0, iconSize),
+                    ImGui.ColorConvertFloat4ToU32(ImGui.GetStyle().Colors[(int) ImGuiCol.Text])
+                );
             }
 
             ImGui.EndGroup();
