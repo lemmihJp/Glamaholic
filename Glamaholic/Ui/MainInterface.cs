@@ -96,7 +96,7 @@ namespace Glamaholic.Ui {
 
             if (ImGui.BeginMenu("Plates")) {
                 if (ImGui.MenuItem("New")) {
-                    this.Ui.Plugin.Config.Plates.Add(new SavedPlate("Untitled Plate"));
+                    this.Ui.Plugin.Config.AddPlate(new SavedPlate("Untitled Plate"));
                     this.Ui.Plugin.SaveConfig();
                     this.SwitchPlate(this.Ui.Plugin.Config.Plates.Count - 1, true);
                 }
@@ -109,7 +109,7 @@ namespace Glamaholic.Ui {
                                 Items = current,
                             };
 
-                            this.Ui.Plugin.Config.Plates.Add(plate);
+                            this.Ui.Plugin.Config.AddPlate(plate);
 
                             this._plateName = string.Empty;
                             this.Ui.Plugin.SaveConfig();
@@ -129,7 +129,7 @@ namespace Glamaholic.Ui {
                             var plate = JsonConvert.DeserializeObject<SavedPlate>(this._importInput);
                             this._importError = null;
                             if (plate != null) {
-                                this.Ui.Plugin.Config.Plates.Add(plate);
+                                this.Ui.Plugin.Config.AddPlate(plate);
                                 this.Ui.Plugin.SaveConfig();
                             }
                         } catch (Exception ex) {

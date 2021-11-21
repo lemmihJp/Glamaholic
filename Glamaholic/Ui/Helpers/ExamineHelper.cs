@@ -71,7 +71,7 @@ namespace Glamaholic.Ui.Helpers {
                             };
                         }
 
-                        this.Ui.Plugin.Config.Plates.Add(plate);
+                        this.Ui.Plugin.Config.AddPlate(plate);
                         this.Ui.Plugin.SaveConfig();
                         this.Ui.OpenMainInterface();
                         this.Ui.SwitchPlate(this.Ui.Plugin.Config.Plates.Count - 1, true);

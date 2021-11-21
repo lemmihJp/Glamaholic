@@ -11,6 +11,17 @@ namespace Glamaholic {
         public List<SavedPlate> Plates { get; init; } = new();
         public bool ShowEditorMenu = true;
         public bool ShowExamineMenu = true;
+
+        internal void AddPlate(SavedPlate plate) {
+            var valid = Enum.GetValues<PlateSlot>();
+            foreach (var slot in plate.Items.Keys.ToArray()) {
+                if (!valid.Contains(slot)) {
+                    plate.Items.Remove(slot);
+                }
+            }
+
+            this.Plates.Add(plate);
+        }
     }
 
     [Serializable]
