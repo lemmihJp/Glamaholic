@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.InteropServices;
+using Dalamud.Game.Text;
+using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Memory;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
@@ -11,7 +14,7 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.GeneratedSheets;
 
 namespace Glamaholic {
-    internal class GameFunctions {
+    internal class GameFunctions : IDisposable {
         private static class Signatures {
             internal const string SetGlamourPlateSlot = "E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8B 46 10";
             internal const string ModifyGlamourPlateSlot = "48 89 74 24 ?? 57 48 83 EC 20 80 79 30 00";
@@ -38,6 +41,8 @@ namespace Glamaholic {
         private readonly TryOnDelegate _tryOn;
         private readonly IntPtr _examineNamePtr;
 
+        private readonly List<uint> _filterIds = new();
+
         internal GameFunctions(Plugin plugin) {
             this.Plugin = plugin;
 
@@ -47,6 +52,22 @@ namespace Glamaholic {
             this._armoirePtr = this.Plugin.SigScanner.GetStaticAddressFromSig(Signatures.ArmoirePointer);
             this._tryOn = Marshal.GetDelegateForFunctionPointer<TryOnDelegate>(this.Plugin.SigScanner.ScanText(Signatures.TryOn));
             this._examineNamePtr = this.Plugin.SigScanner.GetStaticAddressFromSig(Signatures.ExamineNamePointer);
+            
+            this.Plugin.ChatGui.ChatMessage += this.OnChat;
+        }
+
+        public void Dispose() {
+            this.Plugin.ChatGui.ChatMessage -= this.OnChat;
+        }
+
+        private void OnChat(XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled) {
+            if (this._filterIds.Count == 0 || type != XivChatType.SystemMessage) {
+                return;
+            }
+
+            if (message.Payloads.Any(payload => payload is ItemPayload item && this._filterIds.Remove(item.ItemId))) {
+                isHandled = true;
+            }
         }
 
         internal unsafe bool ArmoireLoaded => *(byte*) this._armoirePtr > 0;
@@ -298,6 +319,7 @@ namespace Glamaholic {
         }
 
         internal void TryOn(uint itemId, byte stainId) {
+            this._filterIds.Add(itemId);
             this._tryOn(0xFF, itemId % 1_000_000, stainId, 0, 0);
         }
     }

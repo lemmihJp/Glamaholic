@@ -14,6 +14,9 @@ namespace Glamaholic {
         internal DalamudPluginInterface Interface { get; init; }
         
         [PluginService]
+        internal ChatGui ChatGui { get; init; }
+        
+        [PluginService]
         internal CommandManager CommandManager { get; init; }
 
         [PluginService]
@@ -43,6 +46,7 @@ namespace Glamaholic {
         public void Dispose() {
             this.Commands.Dispose();
             this.Ui.Dispose();
+            this.Functions.Dispose();
         }
 
         internal void SaveConfig() {
