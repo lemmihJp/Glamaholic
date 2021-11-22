@@ -156,8 +156,29 @@ namespace Glamaholic.Ui {
             if (ImGui.BeginMenu("Settings")) {
                 anyChanged |= ImGui.MenuItem("Show plate editor menu", null, ref this.Ui.Plugin.Config.ShowEditorMenu);
                 anyChanged |= ImGui.MenuItem("Show examine window menu", null, ref this.Ui.Plugin.Config.ShowExamineMenu);
+                ImGui.Separator();
+                anyChanged |= ImGui.MenuItem("Show Ko-fi button", null, ref this.Ui.Plugin.Config.ShowKofiButton);
 
                 ImGui.EndMenu();
+            }
+
+            if (this.Ui.Plugin.Config.ShowKofiButton) {
+                const string kofiText = "Support on Ko-fi";
+                var kofiTextSize = ImGui.CalcTextSize(kofiText);
+                ImGui.GetWindowDrawList().AddRectFilled(
+                    ImGui.GetCursorScreenPos(),
+                    ImGui.GetCursorScreenPos() + kofiTextSize + ImGui.GetStyle().ItemInnerSpacing * 2,
+                    0xFF5B5EFF
+                );
+                ImGui.PushStyleColor(ImGuiCol.Text, 0xFFFFFFFF);
+                ImGui.PushStyleColor(ImGuiCol.HeaderHovered, 0x00000000);
+                if (ImGui.MenuItem(kofiText)) {
+                    Process.Start(new ProcessStartInfo("https://ko-fi.com/ascclemens") {
+                        UseShellExecute = true,
+                    });
+                }
+
+                ImGui.PopStyleColor(2);
             }
 
             if (anyChanged) {
@@ -445,7 +466,7 @@ namespace Glamaholic.Ui {
                     drawCursor + new Vector2(paddingSize / 2f) + new Vector2(iconSize),
                     ImGui.ColorConvertFloat4ToU32(ImGui.GetStyle().Colors[(int) ImGuiCol.Text])
                 );
-                
+
                 ImGui.GetWindowDrawList().AddLine(
                     drawCursor + new Vector2(paddingSize / 2f) + new Vector2(iconSize, 0),
                     drawCursor + new Vector2(paddingSize / 2f) + new Vector2(0, iconSize),
