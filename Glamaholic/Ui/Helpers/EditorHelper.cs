@@ -16,37 +16,17 @@ namespace Glamaholic.Ui.Helpers {
 
             var addon = (AtkUnitBase*) this.Ui.Plugin.GameGui.GetAddonByName(Util.PlateAddon, 1);
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            if (addon != null && addon->IsVisible) {
-                this.DrawInner(addon);
-            }
-        }
-
-        private unsafe void DrawInner(AtkUnitBase* addon) {
-            var drawPos = HelperUtil.DrawPosForAddon(addon);
-            if (drawPos == null) {
+            if (addon == null || !addon->IsVisible) {
                 return;
             }
 
-            using (new HelperUtil.HelperStyles()) {
-                ImGui.SetNextWindowPos(drawPos.Value, ImGuiCond.Appearing);
-                if (!ImGui.Begin("##glamaholic-helper-open", HelperUtil.HelperWindowFlags)) {
-                    ImGui.End();
-                    return;
-                }
+            HelperUtil.DrawHelper(addon, "glamaholic-editor-helper", false, this.DrawDropdown);
+        }
+
+        private void DrawDropdown() {
+            if (ImGui.Selectable($"Open {this.Ui.Plugin.Name}")) {
+                this.Ui.OpenMainInterface();
             }
-
-            ImGui.SetNextItemWidth(HelperUtil.DropdownWidth());
-            if (ImGui.BeginCombo("##glamaholic-helper-examine-combo", this.Ui.Plugin.Name)) {
-                if (ImGui.Selectable($"Open {this.Ui.Plugin.Name}")) {
-                    this.Ui.OpenMainInterface();
-                }
-
-                ImGui.EndCombo();
-            }
-            
-            ImGui.SetNextWindowPos(drawPos.Value);
-
-            ImGui.End();
         }
     }
 }

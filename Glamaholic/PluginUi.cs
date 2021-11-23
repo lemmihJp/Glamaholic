@@ -16,6 +16,7 @@ namespace Glamaholic {
         private MainInterface MainInterface { get; }
         private EditorHelper EditorHelper { get; }
         private ExamineHelper ExamineHelper { get; }
+        private TryOnHelper TryOnHelper { get; }
         internal List<AlternativeFinder> AlternativeFinders { get; } = new();
         internal List<(string, string)> Help { get; } = new();
 
@@ -38,6 +39,7 @@ namespace Glamaholic {
             this.MainInterface = new MainInterface(this);
             this.EditorHelper = new EditorHelper(this);
             this.ExamineHelper = new ExamineHelper(this);
+            this.TryOnHelper = new TryOnHelper(this);
 
             this.Plugin.Interface.UiBuilder.Draw += this.Draw;
             this.Plugin.Interface.UiBuilder.OpenConfigUi += this.OpenMainInterface;
@@ -78,6 +80,7 @@ namespace Glamaholic {
             this.MainInterface.Draw();
             this.EditorHelper.Draw();
             this.ExamineHelper.Draw();
+            this.TryOnHelper.Draw();
 
             this.AlternativeFinders.RemoveAll(finder => {
                 finder.Draw();

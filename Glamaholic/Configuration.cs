@@ -11,6 +11,7 @@ namespace Glamaholic {
         public List<SavedPlate> Plates { get; init; } = new();
         public bool ShowEditorMenu = true;
         public bool ShowExamineMenu = true;
+        public bool ShowTryOnMenu = true;
         public bool ShowKofiButton = true;
 
         internal void AddPlate(SavedPlate plate) {

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using Dalamud.Interface;
+using Dalamud.Logging;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 
@@ -31,7 +32,7 @@ namespace Glamaholic.Ui.Helpers {
             }
 
             var xModifier = right
-                ? root->Width - DropdownWidth()
+                ? root->Width * addon->Scale - DropdownWidth()
                 : 0;
 
             return ImGuiHelpers.MainViewport.Pos
@@ -52,10 +53,41 @@ namespace Glamaholic.Ui.Helpers {
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0);
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, Vector2.Zero);
             }
-            
+
             public void Dispose() {
                 ImGui.PopStyleVar(3);
             }
+        }
+
+        internal static unsafe void DrawHelper(AtkUnitBase* addon, string id, bool right, Action dropdown) {
+            var drawPos = DrawPosForAddon(addon, right);
+            if (drawPos == null) {
+                return;
+            }
+
+            using (new HelperStyles()) {
+                // get first frame
+                ImGui.SetNextWindowPos(drawPos.Value, ImGuiCond.Appearing);
+                if (!ImGui.Begin($"##{id}", HelperWindowFlags)) {
+                    ImGui.End();
+                    return;
+                }
+            }
+
+            ImGui.SetNextItemWidth(DropdownWidth());
+            if (ImGui.BeginCombo($"##{id}-combo", Plugin.PluginName)) {
+                try {
+                    dropdown();
+                } catch (Exception ex) {
+                    PluginLog.LogError(ex, "Error drawing helper combo");
+                }
+
+                ImGui.EndCombo();
+            }
+
+            ImGui.SetWindowPos(drawPos.Value);
+
+            ImGui.End();
         }
     }
 }

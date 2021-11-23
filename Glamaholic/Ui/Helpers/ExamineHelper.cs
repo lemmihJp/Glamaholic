@@ -18,45 +18,24 @@ namespace Glamaholic.Ui.Helpers {
 
             var examineAddon = (AtkUnitBase*) this.Ui.Plugin.GameGui.GetAddonByName("CharacterInspect", 1);
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            if (examineAddon != null && examineAddon->IsVisible) {
-                this.DrawInner(examineAddon);
-            }
-        }
-
-        private unsafe void DrawInner(AtkUnitBase* addon) {
-            var drawPos = HelperUtil.DrawPosForAddon(addon);
-            if (drawPos == null) {
+            if (examineAddon == null || !examineAddon->IsVisible) {
                 return;
             }
 
-            using (new HelperUtil.HelperStyles()) {
-                // get first frame
-                ImGui.SetNextWindowPos(drawPos.Value, ImGuiCond.Appearing);
-                if (!ImGui.Begin("##glamaholic-helper-examine", HelperUtil.HelperWindowFlags)) {
-                    ImGui.End();
-                    return;
-                }
+            HelperUtil.DrawHelper(examineAddon, "glamaholic-helper-examine", false, this.DrawDropdown);
+        }
+
+        private void DrawDropdown() {
+            if (ImGui.Selectable("Create glamour plate")) {
+                this.CopyToGlamourPlate();
             }
 
-            ImGui.SetNextItemWidth(HelperUtil.DropdownWidth());
-            if (ImGui.BeginCombo("##glamaholic-helper-examine-combo", this.Ui.Plugin.Name)) {
-                if (ImGui.Selectable("Create glamour plate")) {
-                    this.CopyToGlamourPlate();
+            if (ImGui.Selectable("Try on")) {
+                var items = GetItems();
+                if (items != null) {
+                    this.Ui.TryOn(items.Values);
                 }
-
-                if (ImGui.Selectable("Try on")) {
-                    var items = GetItems();
-                    if (items != null) {
-                        this.Ui.TryOn(items.Values);
-                    }
-                }
-
-                ImGui.EndCombo();
             }
-
-            ImGui.SetWindowPos(drawPos.Value);
-
-            ImGui.End();
         }
 
         private static unsafe Dictionary<PlateSlot, SavedGlamourItem>? GetItems() {

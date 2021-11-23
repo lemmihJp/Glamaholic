@@ -160,6 +160,7 @@ namespace Glamaholic.Ui {
             if (ImGui.BeginMenu("Settings")) {
                 anyChanged |= ImGui.MenuItem("Show plate editor menu", null, ref this.Ui.Plugin.Config.ShowEditorMenu);
                 anyChanged |= ImGui.MenuItem("Show examine window menu", null, ref this.Ui.Plugin.Config.ShowExamineMenu);
+                anyChanged |= ImGui.MenuItem("Show try on menu", null, ref this.Ui.Plugin.Config.ShowTryOnMenu);
                 ImGui.Separator();
                 anyChanged |= ImGui.MenuItem("Show Ko-fi button", null, ref this.Ui.Plugin.Config.ShowKofiButton);
 
