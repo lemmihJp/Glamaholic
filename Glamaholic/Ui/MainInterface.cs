@@ -416,7 +416,7 @@ namespace Glamaholic.Ui {
                             ImGui.CloseCurrentPopup();
                         }
 
-                        if (ImGui.IsItemClicked(ImGuiMouseButton.Middle)) {
+                        if (Util.IsItemMiddleOrCtrlClicked()) {
                             this.Ui.AlternativeFinders.Add(new AlternativeFinder(this.Ui, item));
                         }
                     }
@@ -521,7 +521,7 @@ namespace Glamaholic.Ui {
                 }
             }
 
-            if (mirage != null && mirage.ItemId != 0 && ImGui.IsItemClicked(ImGuiMouseButton.Middle)) {
+            if (mirage != null && mirage.ItemId != 0 && Util.IsItemMiddleOrCtrlClicked()) {
                 var item = this.Ui.Plugin.DataManager.GetExcelSheet<Item>()!.GetRow(mirage.ItemId);
                 if (item != null) {
                     this.Ui.AlternativeFinders.Add(new AlternativeFinder(this.Ui, item));

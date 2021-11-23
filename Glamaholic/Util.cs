@@ -82,6 +82,14 @@ namespace Glamaholic {
             };
         }
 
+        internal static bool IsItemMiddleOrCtrlClicked() {
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Middle)) {
+                return true;
+            }
+
+            return ImGui.GetIO().KeyCtrl && ImGui.IsItemClicked(ImGuiMouseButton.Left);
+        }
+
         // https://github.com/ufx/GarlandTools/blob/5b2ec54dc792175a1d565fddb6c6b975b9a9ff64/Garland.Data/Hacks.cs#L89
         internal static bool IsItemSkipped(Item item) {
             var name = item.Name.RawString;
