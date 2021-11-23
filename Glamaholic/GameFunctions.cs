@@ -203,7 +203,7 @@ namespace Glamaholic {
                 var source = MirageSource.GlamourDresser;
                 var info = (0, 0u, (byte) 0);
                 // find an item in the dresser that matches
-                var matchingIds = dresser.FindAll(mirage => mirage.ItemId % 1_000_000 == item.ItemId);
+                var matchingIds = dresser.FindAll(mirage => mirage.ItemId % Util.HqItemOffset == item.ItemId);
                 if (matchingIds.Count == 0) {
                     // if not in the glamour dresser, look in the armoire
                     if (this.ArmoireIndexIfPresent(item.ItemId) is { } armoireIdx) {
@@ -334,7 +334,7 @@ namespace Glamaholic {
                 this._filterIds.Add(itemId);
             }
 
-            this._tryOn(0xFF, itemId % 1_000_000, stainId, 0, 0);
+            this._tryOn(0xFF, itemId % Util.HqItemOffset, stainId, 0, 0);
         }
     }
 

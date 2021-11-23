@@ -442,7 +442,7 @@ namespace Glamaholic.Ui {
 
             // check for item
             if (mirage != null && mirage.ItemId != 0 && editingPlate) {
-                var has = GameFunctions.DresserContents.Any(saved => saved.ItemId % 1_000_000 == mirage.ItemId) || this.Ui.Plugin.Functions.IsInArmoire(mirage.ItemId);
+                var has = GameFunctions.DresserContents.Any(saved => saved.ItemId % Util.HqItemOffset == mirage.ItemId) || this.Ui.Plugin.Functions.IsInArmoire(mirage.ItemId);
                 if (!has) {
                     borderColour = ImGuiColors.DalamudYellow;
                 }
