@@ -328,8 +328,11 @@ namespace Glamaholic {
             }
         }
 
-        internal void TryOn(uint itemId, byte stainId) {
-            this._filterIds.Add(itemId);
+        internal void TryOn(uint itemId, byte stainId, bool suppress = true) {
+            if (suppress) {
+                this._filterIds.Add(itemId);
+            }
+
             this._tryOn(0xFF, itemId % 1_000_000, stainId, 0, 0);
         }
     }

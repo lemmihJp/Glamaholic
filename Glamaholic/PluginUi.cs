@@ -15,6 +15,7 @@ namespace Glamaholic {
         private MainInterface MainInterface { get; }
         private EditorHelper EditorHelper { get; }
         private ExamineHelper ExamineHelper { get; }
+        internal List<AlternativeFinder> AlternativeFinders { get; } = new();
 
         internal PluginUi(Plugin plugin) {
             this.Plugin = plugin;
@@ -62,6 +63,11 @@ namespace Glamaholic {
             this.MainInterface.Draw();
             this.EditorHelper.Draw();
             this.ExamineHelper.Draw();
+
+            this.AlternativeFinders.RemoveAll(finder => {
+                finder.Draw();
+                return !finder.Visible;
+            });
         }
 
         internal void SwitchPlate(int idx, bool scrollTo = false) {

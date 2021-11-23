@@ -11,6 +11,8 @@ using Newtonsoft.Json;
 
 namespace Glamaholic.Ui {
     internal class MainInterface {
+        internal const int IconSize = 48;
+
         private static readonly PlateSlot[] LeftSide = {
             PlateSlot.MainHand,
             PlateSlot.Head,
@@ -397,6 +399,10 @@ namespace Glamaholic.Ui {
 
                             ImGui.CloseCurrentPopup();
                         }
+
+                        if (ImGui.IsItemClicked(ImGuiMouseButton.Middle)) {
+                            this.Ui.AlternativeFinders.Add(new AlternativeFinder(this.Ui, item));
+                        }
                     }
                 }
 
@@ -499,6 +505,13 @@ namespace Glamaholic.Ui {
                 }
             }
 
+            if (mirage != null && mirage.ItemId != 0 && ImGui.IsItemClicked(ImGuiMouseButton.Middle)) {
+                var item = this.Ui.Plugin.DataManager.GetExcelSheet<Item>()!.GetRow(mirage.ItemId);
+                if (item != null) {
+                    this.Ui.AlternativeFinders.Add(new AlternativeFinder(this.Ui, item));
+                }
+            }
+
             this.DrawItemPopup(itemPopup, plate, slot);
 
             if (mirage != null) {
@@ -507,7 +520,6 @@ namespace Glamaholic.Ui {
         }
 
         private void DrawPlatePreview(bool editingPlate, SavedPlate plate) {
-            const int iconSize = 48;
             const int paddingSize = 12;
 
             if (!ImGui.BeginTable("plate item preview", 2, ImGuiTableFlags.SizingFixedFit)) {
@@ -516,9 +528,9 @@ namespace Glamaholic.Ui {
 
             foreach (var (left, right) in LeftSide.Zip(RightSide)) {
                 ImGui.TableNextColumn();
-                this.DrawIcon(left, plate, editingPlate, iconSize, paddingSize);
+                this.DrawIcon(left, plate, editingPlate, IconSize, paddingSize);
                 ImGui.TableNextColumn();
-                this.DrawIcon(right, plate, editingPlate, iconSize, paddingSize);
+                this.DrawIcon(right, plate, editingPlate, IconSize, paddingSize);
             }
 
             ImGui.EndTable();
