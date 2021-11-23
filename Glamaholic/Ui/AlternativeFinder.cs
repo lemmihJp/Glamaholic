@@ -4,6 +4,7 @@ using System.Numerics;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
+using Dalamud.Interface;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 
@@ -72,13 +73,30 @@ namespace Glamaholic.Ui {
             }
 
             foreach (var alt in this.Alternatives) {
-                if (ImGui.Selectable($"{alt.Name}##{alt.RowId}", alt.RowId == this.Item.RowId)) {
+                if (ImGui.Selectable($"##{alt.RowId}", alt.RowId == this.Item.RowId)) {
                     this.LinkItem(alt);
                 }
 
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
                     this.Ui.Plugin.Functions.TryOn(alt.RowId, 0, false);
                 }
+
+                ImGui.SameLine();
+
+                ImGui.PushFont(UiBuilder.IconFont);
+                if (!alt.IsDyeable) {
+                    ImGui.PushStyleColor(ImGuiCol.Text, ImGui.GetStyle().Colors[(int) ImGuiCol.TextDisabled]);
+                }
+
+                ImGui.TextUnformatted(FontAwesomeIcon.FillDrip.ToIconString());
+                if (!alt.IsDyeable) {
+                    ImGui.PopStyleColor();
+                }
+
+                ImGui.PopFont();
+
+                ImGui.SameLine();
+                ImGui.TextUnformatted(alt.Name);
             }
 
             ImGui.EndChild();
