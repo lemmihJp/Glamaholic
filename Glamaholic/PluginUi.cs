@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Glamaholic.Ui;
@@ -16,9 +17,23 @@ namespace Glamaholic {
         private EditorHelper EditorHelper { get; }
         private ExamineHelper ExamineHelper { get; }
         internal List<AlternativeFinder> AlternativeFinders { get; } = new();
+        internal List<(string, string)> Help { get; } = new();
 
         internal PluginUi(Plugin plugin) {
             this.Plugin = plugin;
+
+            foreach (var entry in Resourcer.Resource.AsString("help.txt").Split("---")) {
+                var lines = entry.Trim().Split(new[] { "\n", "\r\n" }, StringSplitOptions.TrimEntries);
+                if (lines.Length == 0 || !lines[0].StartsWith("#")) {
+                    continue;
+                }
+
+                var title = lines[0][1..].Trim();
+                var content = string.Join(" ", lines[1..]
+                    .SkipWhile(string.IsNullOrWhiteSpace)
+                    .Select(line => string.IsNullOrWhiteSpace(line) ? "\n" : line));
+                this.Help.Add((title, content));
+            }
 
             this.MainInterface = new MainInterface(this);
             this.EditorHelper = new EditorHelper(this);

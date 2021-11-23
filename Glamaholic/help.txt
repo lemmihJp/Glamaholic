@@ -1,0 +1,34 @@
+# How to use Glamaholic
+
+Thank you for installing Glamaholic! This plugin can act as your home for
+glamours, since you can store as many as you would like in it. To get started,
+try reading the section called "Adding glamour plates". Keep in mind that you'll
+need to be editing your plates at the Glamour Dresser to be able to copy those
+plates into the plugin or apply new plates.
+
+---
+
+# Adding glamour plates
+
+Click on the Plates menu and you can add plates to Glamaholic.
+
+
+- Click "New" to add an empty plate, starting from scratch.
+
+- Hover over "Add from current plate", type in a name, and press Enter to copy a
+plate from your glamour dresser into Glamaholic.
+
+- Hover over "Import" and paste in a shared glamour plate to import a plate from
+elsewhere.
+
+- Open the Examine window a character, click the "Glamaholic" menu, then click
+"Create glamour plate" to create a glamour plate from someone else's outfit.
+
+---
+
+# Finding items that share a model
+
+You can search for items that share the same model as another item by either
+middle-clicking (click with mouse wheel) or holding Control and left-clicking on 
+any item name or item icon. This will open a window listing items with the same
+model where you can link or try them on.

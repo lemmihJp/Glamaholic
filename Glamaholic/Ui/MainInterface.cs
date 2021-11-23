@@ -164,6 +164,22 @@ namespace Glamaholic.Ui {
                 ImGui.EndMenu();
             }
 
+            if (ImGui.BeginMenu("Help")) {
+                foreach (var (title, content) in this.Ui.Help) {
+                    if (!ImGui.BeginMenu(title)) {
+                        continue;
+                    }
+
+                    ImGui.PushTextWrapPos(ImGui.CalcTextSize("0").X * 60f * ImGuiHelpers.GlobalScale);
+                    ImGui.TextUnformatted(content);
+                    ImGui.PopTextWrapPos();
+
+                    ImGui.EndMenu();
+                }
+
+                ImGui.EndMenu();
+            }
+
             if (this.Ui.Plugin.Config.ShowKofiButton) {
                 const string kofiText = "Support on Ko-fi";
                 var kofiTextSize = ImGui.CalcTextSize(kofiText);
