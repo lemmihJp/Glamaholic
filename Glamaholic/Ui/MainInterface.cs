@@ -132,6 +132,8 @@ namespace Glamaholic.Ui {
                                 this.Ui.Plugin.Config.AddPlate(plate);
                                 this.Ui.Plugin.SaveConfig();
                             }
+
+                            this._importInput = string.Empty;
                         } catch (Exception ex) {
                             this._importError = ex;
                         }
