@@ -10,7 +10,7 @@ namespace Glamaholic {
         internal const string PlateAddon = "MiragePrismMiragePlate";
         private const string BoxAddon = "MiragePrismPrismBox";
         private const string ArmoireAddon = "CabinetWithdraw";
-        
+
         private static unsafe bool IsOpen(AtkUnitBase* addon) {
             return addon != null && addon->IsVisible;
         }
@@ -19,7 +19,7 @@ namespace Glamaholic {
             var addon = (AtkUnitBase*) gui.GetAddonByName(name, 1);
             return IsOpen(addon);
         }
-        
+
         internal static bool IsEditingPlate(GameGui gui) {
             var plateOpen = IsOpen(gui, PlateAddon);
             var boxOpen = IsOpen(gui, BoxAddon);
@@ -27,7 +27,7 @@ namespace Glamaholic {
 
             return plateOpen && (boxOpen || armoireOpen);
         }
-        
+
         internal static bool DrawTextInput(string id, ref string input, uint max = 512, string message = "Press Enter to save.", ImGuiInputTextFlags flags = ImGuiInputTextFlags.None) {
             ImGui.SetNextItemWidth(-1);
             var ret = ImGui.InputText($"##{id}", ref input, max, ImGuiInputTextFlags.EnterReturnsTrue | flags);
@@ -36,7 +36,7 @@ namespace Glamaholic {
 
             return ret && input.Length > 0;
         }
-        
+
         internal static bool IconButton(FontAwesomeIcon icon, string? id = null, string? tooltip = null, bool small = false) {
             var label = icon.ToIconString();
             if (id != null) {
@@ -57,7 +57,7 @@ namespace Glamaholic {
 
             return ret;
         }
-        
+
         internal static void TextUnformattedWrapped(string text) {
             ImGui.PushTextWrapPos();
             ImGui.TextUnformatted(text);

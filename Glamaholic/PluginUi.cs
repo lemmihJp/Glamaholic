@@ -102,7 +102,7 @@ namespace Glamaholic {
                 if (mirage.ItemId == 0) {
                     continue;
                 }
-                
+
                 this.Plugin.Functions.TryOn(mirage.ItemId, mirage.StainId);
                 SetTryOnSave(true);
             }

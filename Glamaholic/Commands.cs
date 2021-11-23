@@ -16,7 +16,7 @@ namespace Glamaholic {
         public void Dispose() {
             this.Plugin.CommandManager.RemoveHandler("/glamaholic");
         }
-        
+
         private void OnCommand(string command, string arguments) {
             this.Plugin.Ui.ToggleMainInterface();
         }

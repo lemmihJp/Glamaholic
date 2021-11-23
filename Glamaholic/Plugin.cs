@@ -12,16 +12,16 @@ namespace Glamaholic {
 
         [PluginService]
         internal DalamudPluginInterface Interface { get; init; }
-        
+
         [PluginService]
         internal ChatGui ChatGui { get; init; }
-        
+
         [PluginService]
         internal CommandManager CommandManager { get; init; }
 
         [PluginService]
         internal DataManager DataManager { get; init; }
-        
+
         [PluginService]
         internal GameGui GameGui { get; init; }
 

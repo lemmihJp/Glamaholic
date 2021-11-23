@@ -57,7 +57,7 @@ namespace Glamaholic {
             this._armoirePtr = this.Plugin.SigScanner.GetStaticAddressFromSig(Signatures.ArmoirePointer);
             this._tryOn = Marshal.GetDelegateForFunctionPointer<TryOnDelegate>(this.Plugin.SigScanner.ScanText(Signatures.TryOn));
             this._examineNamePtr = this.Plugin.SigScanner.GetStaticAddressFromSig(Signatures.ExamineNamePointer);
-            
+
             this.Plugin.ChatGui.ChatMessage += this.OnChat;
         }
 
@@ -193,7 +193,7 @@ namespace Glamaholic {
                         continue;
                     }
                 }
-                
+
                 *slotPtr = slot;
                 if (item.ItemId == 0) {
                     this._clearGlamourPlateSlot((IntPtr) agent, slot);
@@ -290,6 +290,7 @@ namespace Glamaholic {
                         } else {
                             usedStains[address] = 1;
                         }
+
                         goto NoBreakLabels;
                     }
                 }

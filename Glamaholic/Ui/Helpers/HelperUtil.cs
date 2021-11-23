@@ -21,7 +21,7 @@ namespace Glamaholic.Ui.Helpers {
             if (addon == null) {
                 return null;
             }
-            
+
             var root = addon->RootNode;
             if (root == null) {
                 return null;
