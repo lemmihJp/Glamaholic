@@ -24,7 +24,7 @@ namespace Glamaholic.Ui {
             var info = ModelInfo(item.ModelMain);
 
             foreach (var row in this.Ui.Plugin.DataManager.GetExcelSheet<Item>()!) {
-                if (row.EquipSlotCategory.Row != this.Item.EquipSlotCategory.Row || info != ModelInfo(row.ModelMain)) {
+                if (Util.IsItemSkipped(row) || row.EquipSlotCategory.Row != this.Item.EquipSlotCategory.Row || info != ModelInfo(row.ModelMain)) {
                     continue;
                 }
 

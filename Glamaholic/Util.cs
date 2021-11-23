@@ -81,5 +81,17 @@ namespace Glamaholic {
                 _ => throw new ArgumentOutOfRangeException(nameof(slot), slot, null),
             };
         }
+
+        // https://github.com/ufx/GarlandTools/blob/5b2ec54dc792175a1d565fddb6c6b975b9a9ff64/Garland.Data/Hacks.cs#L89
+        internal static bool IsItemSkipped(Item item) {
+            var name = item.Name.RawString;
+            return item.RowId switch {
+                // Dated Radz-at-Han Coin
+                17557 => false,
+                // Wrapped Present (no icon)
+                22357 => true,
+                _ => name.Length == 0 || name.StartsWith("Dated"),
+            };
+        }
     }
 }

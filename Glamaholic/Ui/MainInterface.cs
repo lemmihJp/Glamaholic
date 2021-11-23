@@ -688,6 +688,7 @@ namespace Glamaholic.Ui {
         private void FilterItems(PlateSlot slot) {
             var filter = this._itemFilter.ToLowerInvariant();
             this.FilteredItems = this.Items
+                .Where(item => !Util.IsItemSkipped(item))
                 .Where(item => Util.MatchesSlot(item.EquipSlotCategory.Value!, slot))
                 .Where(item => this._itemFilter.Length == 0 || item.Name.RawString.ToLowerInvariant().Contains(filter))
                 .ToList();
