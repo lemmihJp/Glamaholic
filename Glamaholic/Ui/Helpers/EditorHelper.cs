@@ -1,5 +1,4 @@
-﻿using Dalamud.Interface;
-using FFXIVClientStructs.FFXIV.Component.GUI;
+﻿using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 
 namespace Glamaholic.Ui.Helpers {
@@ -28,13 +27,15 @@ namespace Glamaholic.Ui.Helpers {
                 return;
             }
 
-            ImGui.SetNextWindowPos(drawPos.Value);
-            if (!ImGui.Begin("##glamaholic-helper-open", HelperUtil.HelperWindowFlags)) {
-                ImGui.End();
-                return;
+            using (new HelperUtil.HelperStyles()) {
+                ImGui.SetNextWindowPos(drawPos.Value, ImGuiCond.Appearing);
+                if (!ImGui.Begin("##glamaholic-helper-open", HelperUtil.HelperWindowFlags)) {
+                    ImGui.End();
+                    return;
+                }
             }
 
-            ImGui.SetNextItemWidth(ImGui.CalcTextSize(this.Ui.Plugin.Name).X + ImGui.GetStyle().ItemInnerSpacing.X * 2 + 32 * ImGuiHelpers.GlobalScale);
+            ImGui.SetNextItemWidth(HelperUtil.DropdownWidth());
             if (ImGui.BeginCombo("##glamaholic-helper-examine-combo", this.Ui.Plugin.Name)) {
                 if (ImGui.Selectable($"Open {this.Ui.Plugin.Name}")) {
                     this.Ui.OpenMainInterface();
@@ -42,6 +43,8 @@ namespace Glamaholic.Ui.Helpers {
 
                 ImGui.EndCombo();
             }
+            
+            ImGui.SetNextWindowPos(drawPos.Value);
 
             ImGui.End();
         }

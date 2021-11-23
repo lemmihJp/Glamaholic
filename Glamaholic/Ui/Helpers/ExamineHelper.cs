@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Dalamud.Interface;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
@@ -30,13 +29,16 @@ namespace Glamaholic.Ui.Helpers {
                 return;
             }
 
-            ImGui.SetNextWindowPos(drawPos.Value);
-            if (!ImGui.Begin("##glamaholic-helper-examine", HelperUtil.HelperWindowFlags)) {
-                ImGui.End();
-                return;
+            using (new HelperUtil.HelperStyles()) {
+                // get first frame
+                ImGui.SetNextWindowPos(drawPos.Value, ImGuiCond.Appearing);
+                if (!ImGui.Begin("##glamaholic-helper-examine", HelperUtil.HelperWindowFlags)) {
+                    ImGui.End();
+                    return;
+                }
             }
 
-            ImGui.SetNextItemWidth(ImGui.CalcTextSize(this.Ui.Plugin.Name).X + ImGui.GetStyle().ItemInnerSpacing.X * 2 + 32 * ImGuiHelpers.GlobalScale);
+            ImGui.SetNextItemWidth(HelperUtil.DropdownWidth());
             if (ImGui.BeginCombo("##glamaholic-helper-examine-combo", this.Ui.Plugin.Name)) {
                 if (ImGui.Selectable("Create glamour plate")) {
                     this.CopyToGlamourPlate();
@@ -51,6 +53,8 @@ namespace Glamaholic.Ui.Helpers {
 
                 ImGui.EndCombo();
             }
+
+            ImGui.SetWindowPos(drawPos.Value);
 
             ImGui.End();
         }

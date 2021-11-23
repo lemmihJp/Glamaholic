@@ -8,7 +8,8 @@ using Dalamud.Plugin;
 namespace Glamaholic {
     // ReSharper disable once ClassNeverInstantiated.Global
     public class Plugin : IDalamudPlugin {
-        public string Name => "Glamaholic";
+        internal const string PluginName = "Glamaholic";
+        public string Name => PluginName;
 
         [PluginService]
         internal DalamudPluginInterface Interface { get; init; }
