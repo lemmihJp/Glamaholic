@@ -4,7 +4,6 @@ using System.Numerics;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
-using Dalamud.Logging;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 
@@ -22,7 +21,6 @@ namespace Glamaholic.Ui {
             this.Item = item;
 
             var info = ModelInfo(item.ModelMain);
-            PluginLog.Log($"info: {item.ModelMain} = {info}");
 
             foreach (var row in this.Ui.Plugin.DataManager.GetExcelSheet<Item>()!) {
                 if (row.EquipSlotCategory.Row != this.Item.EquipSlotCategory.Row || info != ModelInfo(row.ModelMain)) {
