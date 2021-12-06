@@ -86,7 +86,8 @@ namespace Glamaholic {
                 var list = new List<GlamourItem>();
 
                 var agents = Framework.Instance()->GetUiModule()->GetAgentModule();
-                var dresserAgent = agents->GetAgentByInternalId(AgentId.MiragePrismPrismBox);
+                // TODO: replace with AgentId.MiragePrismPrismBox when ClientStructs is updated
+                var dresserAgent = agents->GetAgentByInternalId((AgentId) 292);
 
                 var itemsStart = *(IntPtr*) ((IntPtr) dresserAgent + 0x28);
                 if (itemsStart == IntPtr.Zero) {
@@ -94,7 +95,7 @@ namespace Glamaholic {
                 }
 
                 for (var i = 0; i < 400; i++) {
-                    var glamItem = *(GlamourItem*) (itemsStart + i * 32);
+                    var glamItem = *(GlamourItem*) (itemsStart + i * 28);
                     if (glamItem.ItemId == 0) {
                         continue;
                     }
@@ -120,6 +121,7 @@ namespace Glamaholic {
 
                 var plate = new Dictionary<PlateSlot, SavedGlamourItem>();
                 foreach (var slot in (PlateSlot[]) Enum.GetValues(typeof(PlateSlot))) {
+                    // Updated: 6.0
                     // from SetGlamourPlateSlot
                     var itemId = *(uint*) (editorInfo + 44 * (int) slot + 7956);
                     var stainId = *(byte*) (editorInfo + 44 * (int) slot + 7980);
@@ -138,7 +140,7 @@ namespace Glamaholic {
             }
         }
 
-        private static unsafe AgentInterface* EditorAgent => Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId((AgentId) 293);
+        private static unsafe AgentInterface* EditorAgent => Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId((AgentId) 294);
 
         internal unsafe void SetGlamourPlateSlot(MirageSource source, int glamId, uint itemId, byte stainId) {
             this._setGlamourPlateSlot((IntPtr) EditorAgent, source, glamId, itemId, stainId);
@@ -175,6 +177,7 @@ namespace Glamaholic {
                 return;
             }
 
+            // Updated: 6.0
             var editorInfo = *(IntPtr*) ((IntPtr) agent + 0x28);
             if (editorInfo == IntPtr.Zero) {
                 return;
@@ -184,6 +187,7 @@ namespace Glamaholic {
             var current = CurrentPlate;
             var usedStains = new Dictionary<(uint, uint), uint>();
 
+            // Updated: 6.0
             var slotPtr = (PlateSlot*) (editorInfo + 0x18);
             var initialSlot = *slotPtr;
             foreach (var (slot, item) in plate.Items) {
@@ -378,7 +382,7 @@ namespace Glamaholic {
         }
     }
 
-    [StructLayout(LayoutKind.Explicit, Size = 32)]
+    [StructLayout(LayoutKind.Explicit, Size = 28)]
     internal readonly struct GlamourItem {
         [FieldOffset(4)]
         internal readonly uint Index;

@@ -58,9 +58,7 @@ namespace Glamaholic.Ui.Helpers {
 
                 var stainId = item.Stain;
 
-                // TODO: remove this logic in endwalker
-                var slot = i > 5 ? i - 1 : i;
-                items[(PlateSlot) slot] = new SavedGlamourItem {
+                items[(PlateSlot) i] = new SavedGlamourItem {
                     ItemId = itemId,
                     StainId = stainId,
                 };

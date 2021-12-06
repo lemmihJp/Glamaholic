@@ -94,7 +94,8 @@ namespace Glamaholic {
 
         internal unsafe void TryOn(IEnumerable<SavedGlamourItem> items) {
             void SetTryOnSave(bool save) {
-                var tryOnAgent = (IntPtr) Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.Tryon);
+                // TODO: replace with AgentId.Tryon once ClientStructs is updated for new agents
+                var tryOnAgent = (IntPtr) Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId((AgentId) 147);
                 if (tryOnAgent != IntPtr.Zero) {
                     *(byte*) (tryOnAgent + 0x2E2) = (byte) (save ? 1 : 0);
                 }

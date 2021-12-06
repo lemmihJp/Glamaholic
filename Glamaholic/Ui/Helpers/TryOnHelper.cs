@@ -42,13 +42,14 @@ namespace Glamaholic.Ui.Helpers {
         }
 
         private static unsafe Dictionary<PlateSlot, SavedGlamourItem> GetTryOnItems() {
-            var agent = (IntPtr) Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.Tryon);
+            // TODO: replace with AgentId.Tryon once ClientStructs is updated for new agents
+            var agent = (IntPtr) Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId((AgentId) 147);
             var firstItem = agent + 0x2E8;
 
             var items = new Dictionary<PlateSlot, SavedGlamourItem>();
-            
+
             for (var i = 0; i < 12; i++) {
-                var item = (TryOnItem*) (firstItem + i * 24);
+                var item = (TryOnItem*) (firstItem + i * 28);
                 if (item->Slot == 14 || item->ItemId == 0) {
                     continue;
                 }
@@ -57,10 +58,10 @@ namespace Glamaholic.Ui.Helpers {
                 if (item->GlamourId != 0) {
                     itemId = item->GlamourId;
                 }
-                
-                // TODO: remove this logic in endwalker
+
+                // for some reason, this still accounts for belts in EW
                 var slot = item->Slot > 5 ? item->Slot - 1 : item->Slot;
-                items[(PlateSlot) slot] =new SavedGlamourItem {
+                items[(PlateSlot) slot] = new SavedGlamourItem {
                     ItemId = itemId % Util.HqItemOffset,
                     StainId = item->StainId,
                 };
@@ -69,7 +70,7 @@ namespace Glamaholic.Ui.Helpers {
             return items;
         }
 
-        [StructLayout(LayoutKind.Explicit, Size = 24)]
+        [StructLayout(LayoutKind.Explicit, Size = 28)]
         private readonly struct TryOnItem {
             [FieldOffset(0)]
             internal readonly byte Slot;
@@ -80,10 +81,10 @@ namespace Glamaholic.Ui.Helpers {
             [FieldOffset(5)]
             internal readonly byte UnknownByte;
 
-            [FieldOffset(8)]
+            [FieldOffset(12)]
             internal readonly uint ItemId;
 
-            [FieldOffset(12)]
+            [FieldOffset(16)]
             internal readonly uint GlamourId;
         }
     }
