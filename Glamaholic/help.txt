@@ -10,16 +10,14 @@ plates into the plugin or apply new plates.
 
 # Adding glamour plates
 
-Click on the Plates menu and you can add plates to Glamaholic.
+- From the main Glamaholic window, click "Plates" and then "New" to create an
+empty glamour plate to edit from scratch.
 
+- From the main Glamaholic window, click "Plates", hover over "Import", paste
+a shared plate, then press Enter to import a shared plate.
 
-- Click "New" to add an empty plate, starting from scratch.
-
-- Hover over "Add from current plate", type in a name, and press Enter to copy a
-plate from your glamour dresser into Glamaholic.
-
-- Hover over "Import" and paste in a shared glamour plate to import a plate from
-elsewhere.
+- Click on the Glamaholic menu at the top left of the Glamour Plate Creation
+window, then hover over "Create glamour plate" to import plates from the game.
 
 - Open the Examine window a character, click the "Glamaholic" menu, then click
 "Create glamour plate" to create a glamour plate from someone else's outfit.
