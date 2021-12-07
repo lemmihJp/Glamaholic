@@ -6,6 +6,7 @@ using ImGuiNET;
 namespace Glamaholic.Ui.Helpers {
     internal class ExamineHelper {
         private PluginUi Ui { get; }
+        private string _nameInput = string.Empty;
 
         internal ExamineHelper(PluginUi ui) {
             this.Ui = ui;
@@ -29,8 +30,11 @@ namespace Glamaholic.Ui.Helpers {
             if (ImGui.Selectable($"Open {this.Ui.Plugin.Name}")) {
                 this.Ui.OpenMainInterface();
             }
-            
-            HelperUtil.DrawCreatePlateMenu(this.Ui, this.GetPlate);
+
+            if (ImGui.IsWindowAppearing()) {
+                this._nameInput = this.Ui.Plugin.Functions.ExamineName ?? "Copied glamour";
+            }
+            HelperUtil.DrawCreatePlateMenu(this.Ui, GetItems, ref this._nameInput);
 
             if (ImGui.Selectable("Try on")) {
                 var items = GetItems();
@@ -69,27 +73,6 @@ namespace Glamaholic.Ui.Helpers {
             }
 
             return items;
-        }
-
-        private unsafe SavedPlate? GetPlate() {
-            var inventory = InventoryManager.Instance()->GetInventoryContainer(InventoryType.Examine);
-            if (inventory == null) {
-                return null;
-            }
-
-            var name = this.Ui.Plugin.Functions.ExamineName;
-            if (string.IsNullOrEmpty(name)) {
-                name = "Copied glamour";
-            }
-
-            var items = GetItems();
-            if (items == null) {
-                return null;
-            }
-
-            return new SavedPlate(name) {
-                Items = items,
-            };
         }
     }
 }

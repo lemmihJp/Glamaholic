@@ -8,7 +8,10 @@ using ImGuiNET;
 
 namespace Glamaholic.Ui.Helpers {
     internal class TryOnHelper {
+        private const string PlateName = "Fitting Room";
+
         private PluginUi Ui { get; }
+        private string _nameInput = PlateName;
 
         internal TryOnHelper(PluginUi ui) {
             this.Ui = ui;
@@ -34,7 +37,13 @@ namespace Glamaholic.Ui.Helpers {
                 this.Ui.OpenMainInterface();
             }
 
-            HelperUtil.DrawCreatePlateMenu(this.Ui, () => new SavedPlate("Fitting Room") { Items = GetTryOnItems() });
+            if (ImGui.IsWindowAppearing()) {
+                this._nameInput = PlateName;
+            }
+
+            if (HelperUtil.DrawCreatePlateMenu(this.Ui, GetTryOnItems, ref this._nameInput)) {
+                this._nameInput = PlateName;
+            }
         }
 
         private static unsafe Dictionary<PlateSlot, SavedGlamourItem> GetTryOnItems() {

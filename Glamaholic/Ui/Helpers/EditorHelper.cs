@@ -4,6 +4,7 @@ using ImGuiNET;
 namespace Glamaholic.Ui.Helpers {
     internal class EditorHelper {
         private PluginUi Ui { get; }
+        private string _plateName = string.Empty;
 
         internal EditorHelper(PluginUi ui) {
             this.Ui = ui;
@@ -26,6 +27,10 @@ namespace Glamaholic.Ui.Helpers {
         private void DrawDropdown() {
             if (ImGui.Selectable($"Open {this.Ui.Plugin.Name}")) {
                 this.Ui.OpenMainInterface();
+            }
+
+            if (HelperUtil.DrawCreatePlateMenu(this.Ui, () => GameFunctions.CurrentPlate, ref this._plateName)) {
+                this._plateName = string.Empty;
             }
         }
     }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Numerics;
 using Dalamud.Interface;
 using Dalamud.Logging;
@@ -90,16 +91,26 @@ namespace Glamaholic.Ui.Helpers {
             ImGui.End();
         }
 
-        internal static void DrawCreatePlateMenu(PluginUi ui, Func<SavedPlate?> getter) {
+        internal static bool DrawCreatePlateMenu(PluginUi ui, Func<Dictionary<PlateSlot, SavedGlamourItem>?> getter, ref string nameInput) {
+            var ret = false;
+            
             if (!ImGui.BeginMenu("Create glamour plate")) {
-                return;
+                return ret;
             }
 
-            if (ImGui.Selectable("New")) {
-                var plate = getter();
-                if (plate != null) {
-                    CopyToGlamourPlate(ui, plate, -1);
+            const string msg = "Enter a name and press Enter to create a new plate, or choose a plate below to overwrite.";
+            ImGui.PushTextWrapPos(250);
+            if (Util.DrawTextInput("current-name", ref nameInput, message: msg, flags: ImGuiInputTextFlags.AutoSelectAll)) {
+                var items = getter();
+                if (items != null) {
+                    CopyToGlamourPlate(ui, nameInput, items, -1);
+                    ret = true;
                 }
+            }
+            ImGui.PopTextWrapPos();
+
+            if (ImGui.IsWindowAppearing()) {
+                ImGui.SetKeyboardFocusHere();
             }
 
             ImGui.Separator();
@@ -109,9 +120,10 @@ namespace Glamaholic.Ui.Helpers {
                     var plate = ui.Plugin.Config.Plates[i];
                     var ctrl = ImGui.GetIO().KeyCtrl;
                     if (ImGui.Selectable($"{plate.Name}##{i}") && ctrl) {
-                        var newPlate = getter();
-                        if (newPlate != null) {
-                            CopyToGlamourPlate(ui, newPlate, i);
+                        var items = getter();
+                        if (items != null) {
+                            CopyToGlamourPlate(ui, plate.Name, items, i);
+                            ret = true;
                         }
                     }
 
@@ -126,14 +138,20 @@ namespace Glamaholic.Ui.Helpers {
             }
                 
             ImGui.EndMenu();
+
+            return ret;
         }
 
-        private static void CopyToGlamourPlate(PluginUi ui, SavedPlate plate, int idx) {
+        private static void CopyToGlamourPlate(PluginUi ui, string name, Dictionary<PlateSlot, SavedGlamourItem> items, int idx) {
+            var plate = new SavedPlate(name) {
+                Items = items,
+            };
+
+            Configuration.SanitisePlate(plate);
+            
             if (idx == -1) {
                 ui.Plugin.Config.AddPlate(plate);
             } else {
-                Configuration.SanitisePlate(plate);
-                plate.Name = ui.Plugin.Config.Plates[idx].Name;
                 ui.Plugin.Config.Plates[idx] = plate;
             }
             ui.Plugin.SaveConfig();
