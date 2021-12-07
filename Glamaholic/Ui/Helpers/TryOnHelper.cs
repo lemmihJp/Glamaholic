@@ -30,15 +30,11 @@ namespace Glamaholic.Ui.Helpers {
         }
 
         private void DrawDropdown() {
-            if (ImGui.Selectable("Create glamour plate")) {
-                this.Ui.Plugin.Config.AddPlate(new SavedPlate("Fitting Room") {
-                    Items = GetTryOnItems(),
-                });
-                this.Ui.Plugin.SaveConfig();
-
+            if (ImGui.Selectable($"Open {this.Ui.Plugin.Name}")) {
                 this.Ui.OpenMainInterface();
-                this.Ui.SwitchPlate(this.Ui.Plugin.Config.Plates.Count - 1, true);
             }
+
+            HelperUtil.DrawCreatePlateMenu(this.Ui, () => new SavedPlate("Fitting Room") { Items = GetTryOnItems() });
         }
 
         private static unsafe Dictionary<PlateSlot, SavedGlamourItem> GetTryOnItems() {

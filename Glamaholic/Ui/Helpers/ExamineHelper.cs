@@ -26,9 +26,11 @@ namespace Glamaholic.Ui.Helpers {
         }
 
         private void DrawDropdown() {
-            if (ImGui.Selectable("Create glamour plate")) {
-                this.CopyToGlamourPlate();
+            if (ImGui.Selectable($"Open {this.Ui.Plugin.Name}")) {
+                this.Ui.OpenMainInterface();
             }
+            
+            HelperUtil.DrawCreatePlateMenu(this.Ui, this.GetPlate);
 
             if (ImGui.Selectable("Try on")) {
                 var items = GetItems();
@@ -69,10 +71,10 @@ namespace Glamaholic.Ui.Helpers {
             return items;
         }
 
-        private unsafe void CopyToGlamourPlate() {
+        private unsafe SavedPlate? GetPlate() {
             var inventory = InventoryManager.Instance()->GetInventoryContainer(InventoryType.Examine);
             if (inventory == null) {
-                return;
+                return null;
             }
 
             var name = this.Ui.Plugin.Functions.ExamineName;
@@ -82,17 +84,12 @@ namespace Glamaholic.Ui.Helpers {
 
             var items = GetItems();
             if (items == null) {
-                return;
+                return null;
             }
 
-            var plate = new SavedPlate(name) {
+            return new SavedPlate(name) {
                 Items = items,
             };
-
-            this.Ui.Plugin.Config.AddPlate(plate);
-            this.Ui.Plugin.SaveConfig();
-            this.Ui.OpenMainInterface();
-            this.Ui.SwitchPlate(this.Ui.Plugin.Config.Plates.Count - 1, true);
         }
     }
 }

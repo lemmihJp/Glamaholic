@@ -89,5 +89,56 @@ namespace Glamaholic.Ui.Helpers {
 
             ImGui.End();
         }
+
+        internal static void DrawCreatePlateMenu(PluginUi ui, Func<SavedPlate?> getter) {
+            if (!ImGui.BeginMenu("Create glamour plate")) {
+                return;
+            }
+
+            if (ImGui.Selectable("New")) {
+                var plate = getter();
+                if (plate != null) {
+                    CopyToGlamourPlate(ui, plate, -1);
+                }
+            }
+
+            ImGui.Separator();
+
+            if (ImGui.BeginChild("helper-overwrite", new Vector2(250, 350))) {
+                for (var i = 0; i < ui.Plugin.Config.Plates.Count; i++) {
+                    var plate = ui.Plugin.Config.Plates[i];
+                    var ctrl = ImGui.GetIO().KeyCtrl;
+                    if (ImGui.Selectable($"{plate.Name}##{i}") && ctrl) {
+                        var newPlate = getter();
+                        if (newPlate != null) {
+                            CopyToGlamourPlate(ui, newPlate, i);
+                        }
+                    }
+
+                    if (!ctrl && ImGui.IsItemHovered()) {
+                        ImGui.BeginTooltip();
+                        ImGui.TextUnformatted("Hold Control and click to overwrite.");
+                        ImGui.EndTooltip();
+                    }
+                }
+
+                ImGui.EndChild();
+            }
+                
+            ImGui.EndMenu();
+        }
+
+        private static void CopyToGlamourPlate(PluginUi ui, SavedPlate plate, int idx) {
+            if (idx == -1) {
+                ui.Plugin.Config.AddPlate(plate);
+            } else {
+                Configuration.SanitisePlate(plate);
+                plate.Name = ui.Plugin.Config.Plates[idx].Name;
+                ui.Plugin.Config.Plates[idx] = plate;
+            }
+            ui.Plugin.SaveConfig();
+            ui.OpenMainInterface();
+            ui.SwitchPlate(idx == -1 ? ui.Plugin.Config.Plates.Count - 1 : idx, true);
+        }
     }
 }

@@ -14,14 +14,17 @@ namespace Glamaholic {
         public bool ShowTryOnMenu = true;
         public bool ShowKofiButton = true;
 
-        internal void AddPlate(SavedPlate plate) {
+        internal static void SanitisePlate(SavedPlate plate) {
             var valid = Enum.GetValues<PlateSlot>();
             foreach (var slot in plate.Items.Keys.ToArray()) {
                 if (!valid.Contains(slot)) {
                     plate.Items.Remove(slot);
                 }
             }
+        }
 
+        internal void AddPlate(SavedPlate plate) {
+            SanitisePlate(plate);
             this.Plates.Add(plate);
         }
     }
