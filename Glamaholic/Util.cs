@@ -66,6 +66,63 @@ namespace Glamaholic {
             ImGui.PopTextWrapPos();
         }
 
+        internal static PlateSlot? GetSlot(Item item) {
+            var category = item.EquipSlotCategory.Value;
+            if (category == null) {
+                return null;
+            }
+
+            if (category.MainHand > 0) {
+                return PlateSlot.MainHand;
+            }
+
+            if (category.OffHand > 0) {
+                return PlateSlot.OffHand;
+            }
+
+            if (category.Head > 0) {
+                return PlateSlot.Head;
+            }
+
+            if (category.Body > 0) {
+                return PlateSlot.Body;
+            }
+
+            if (category.Gloves > 0) {
+                return PlateSlot.Hands;
+            }
+
+            if (category.Legs > 0) {
+                return PlateSlot.Legs;
+            }
+
+            if (category.Feet > 0) {
+                return PlateSlot.Feet;
+            }
+
+            if (category.Ears > 0) {
+                return PlateSlot.Ears;
+            }
+
+            if (category.Neck > 0) {
+                return PlateSlot.Neck;
+            }
+
+            if (category.Wrists > 0) {
+                return PlateSlot.Wrists;
+            }
+
+            if (category.FingerR > 0) {
+                return PlateSlot.RightRing;
+            }
+
+            if (category.FingerL > 0) {
+                return PlateSlot.LeftRing;
+            }
+            
+            return null;
+        }
+
         internal static bool MatchesSlot(EquipSlotCategory category, PlateSlot slot) {
             return slot switch {
                 PlateSlot.MainHand => category.MainHand > 0,

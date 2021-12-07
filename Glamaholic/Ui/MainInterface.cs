@@ -2,7 +2,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Numerics;
+using System.Threading.Tasks;
+using Dalamud;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using ImGuiNET;
@@ -34,9 +38,9 @@ namespace Glamaholic.Ui {
         private PluginUi Ui { get; }
         private List<Item> Items { get; }
         private List<Item> FilteredItems { get; set; }
+        private Dictionary<string, byte> Stains { get; }
 
         private bool _visible;
-        private string _plateName = string.Empty;
         private int _dragging = -1;
         private int _selectedPlate = -1;
         private bool _scrollToSelected;
@@ -51,6 +55,8 @@ namespace Glamaholic.Ui {
         private SavedPlate? _editingPlate;
         private string _itemFilter = string.Empty;
         private string _dyeFilter = string.Empty;
+        private string _ecImport = string.Empty;
+        private volatile bool _ecImporting;
 
         internal MainInterface(PluginUi ui) {
             this.Ui = ui;
@@ -60,6 +66,11 @@ namespace Glamaholic.Ui {
                 .Where(row => row.EquipSlotCategory.Row is not 0 && row.EquipSlotCategory.Value!.SoulCrystal == 0)
                 .ToList();
             this.FilteredItems = this.Items;
+
+            this.Stains = this.Ui.Plugin.DataManager.GetExcelSheet<Stain>(ClientLanguage.English)!
+                .Where(row => row.RowId != 0)
+                .Where(row => !string.IsNullOrWhiteSpace(row.Name.RawString))
+                .ToDictionary(row => row.Name.RawString, row => (byte) row.RowId);
         }
 
         internal void Open() {
@@ -101,28 +112,6 @@ namespace Glamaholic.Ui {
                     this.SwitchPlate(this.Ui.Plugin.Config.Plates.Count - 1, true);
                 }
 
-                if (ImGui.BeginMenu("Add from current plate")) {
-                    if (Util.DrawTextInput("current-name", ref this._plateName, message: "Input name and press Enter to save.")) {
-                        var current = GameFunctions.CurrentPlate;
-                        if (current != null) {
-                            var plate = new SavedPlate(this._plateName) {
-                                Items = current,
-                            };
-
-                            this.Ui.Plugin.Config.AddPlate(plate);
-
-                            this._plateName = string.Empty;
-                            this.Ui.Plugin.SaveConfig();
-                        }
-                    }
-
-                    if (ImGui.IsWindowAppearing()) {
-                        ImGui.SetKeyboardFocusHere();
-                    }
-
-                    ImGui.EndMenu();
-                }
-
                 if (ImGui.BeginMenu("Import")) {
                     if (Util.DrawTextInput("import-input", ref this._importInput, 2048, "Press Enter to import.")) {
                         try {
@@ -148,6 +137,23 @@ namespace Glamaholic.Ui {
                         ImGui.PushStyleColor(ImGuiCol.Text, ImGuiColors.DalamudRed);
                         Util.TextUnformattedWrapped(this._importError.Message);
                         ImGui.PopStyleColor();
+                    }
+
+                    ImGui.EndMenu();
+                }
+
+                if (ImGui.BeginMenu("Import from Eorzea Collection")) {
+                    const string msg = "Enter an Eorzea Collection glamour URL and press Enter.";
+                    if (Util.DrawTextInput("ec-import", ref this._ecImport, message: msg, flags: ImGuiInputTextFlags.AutoSelectAll) && !this._ecImporting) {
+                        this.ImportEorzeaCollection();
+                    }
+
+                    if (ImGui.IsWindowAppearing()) {
+                        ImGui.SetKeyboardFocusHere();
+                    }
+
+                    if (this._ecImporting) {
+                        ImGui.TextUnformatted("Working...");
                     }
 
                     ImGui.EndMenu();
@@ -207,6 +213,93 @@ namespace Glamaholic.Ui {
             }
 
             ImGui.EndMenuBar();
+        }
+
+        private void ImportEorzeaCollection() {
+            try {
+                var uri = new Uri(this._ecImport);
+                if (uri.Host != "ffxiv.eorzeacollection.com") {
+                    return;
+                }
+            } catch (Exception) {
+                return;
+            }
+
+            this._ecImporting = true;
+
+            Task.Run(async () => {
+                var items = new Dictionary<PlateSlot, SavedGlamourItem>();
+
+                var client = new HttpClient();
+                var resp = await client.GetAsync(this._ecImport);
+                var html = await resp.Content.ReadAsStringAsync();
+
+                var titleParts = html.Split("<title>");
+                var glamName = titleParts.Length > 1
+                    ? titleParts[1].Split('<')[0].Split('|')[0].Trim()
+                    : "Eorzea Collection plate";
+
+                var parts = html.Split("c-gear-slot-item-name");
+                foreach (var part in parts) {
+                    var nameParts = part.Split('>');
+                    if (nameParts.Length < 2) {
+                        continue;
+                    }
+
+                    var rawName = nameParts[1].Split('<')[0].Trim();
+                    var name = WebUtility.HtmlDecode(rawName);
+                    if (string.IsNullOrWhiteSpace(name)) {
+                        continue;
+                    }
+                    
+                    var item = this.Items.Find(item => item.Name == name);
+                    if (item == null) {
+                        continue;
+                    }
+
+                    var slot = Util.GetSlot(item);
+                    if (slot is PlateSlot.RightRing && items.ContainsKey(PlateSlot.RightRing)) {
+                        slot = PlateSlot.LeftRing;
+                    }
+
+                    if (slot == null) {
+                        continue;
+                    }
+
+                    var stainId = this.GetStainIdFromPart(part);
+                    items[slot.Value] = new SavedGlamourItem {
+                        ItemId = item.RowId,
+                        StainId = stainId,
+                    };
+                }
+
+                this._ecImporting = false;
+
+                var plate = new SavedPlate(glamName) {
+                    Items = items,
+                };
+                this.Ui.Plugin.Config.AddPlate(plate);
+                this.Ui.Plugin.SaveConfig();
+                this.SwitchPlate(this.Ui.Plugin.Config.Plates.Count - 1, true);
+                this._ecImport = string.Empty;
+            });
+        }
+
+        private byte GetStainIdFromPart(string part) {
+            var stainParts = part.Split('⬤');
+            if (stainParts.Length <= 1) {
+                return 0;
+            }
+
+            var stainSubParts = stainParts[1].Split('>');
+            if (stainSubParts.Length <= 1) {
+                return 0;
+            }
+
+            var rawStainName = stainSubParts[1].Split('<')[0].Trim();
+            var stainName = WebUtility.HtmlDecode(rawStainName);
+            this.Stains.TryGetValue(stainName, out var stainId);
+            return stainId;
         }
 
         private void DrawPlateList() {
