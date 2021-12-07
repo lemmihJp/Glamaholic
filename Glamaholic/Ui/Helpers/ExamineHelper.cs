@@ -58,7 +58,9 @@ namespace Glamaholic.Ui.Helpers {
 
                 var stainId = item.Stain;
 
-                items[(PlateSlot) i] = new SavedGlamourItem {
+                // for some reason, this still accounts for belts in EW
+                var slot = i > 5 ? i - 1 : i;
+                items[(PlateSlot) slot] = new SavedGlamourItem {
                     ItemId = itemId,
                     StainId = stainId,
                 };
