@@ -236,7 +236,7 @@ namespace Glamaholic.Ui {
 
                 var titleParts = html.Split("<title>");
                 var glamName = titleParts.Length > 1
-                    ? titleParts[1].Split('<')[0].Split('|')[0].Trim()
+                    ? WebUtility.HtmlDecode(titleParts[1].Split('<')[0].Split('|')[0].Trim())
                     : "Eorzea Collection plate";
 
                 var parts = html.Split("c-gear-slot-item-name");
