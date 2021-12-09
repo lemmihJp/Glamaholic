@@ -119,7 +119,7 @@ namespace Glamaholic {
             if (category.FingerL > 0) {
                 return PlateSlot.LeftRing;
             }
-            
+
             return null;
         }
 

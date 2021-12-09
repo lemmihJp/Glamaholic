@@ -34,6 +34,7 @@ namespace Glamaholic.Ui.Helpers {
             if (ImGui.IsWindowAppearing()) {
                 this._nameInput = this.Ui.Plugin.Functions.ExamineName ?? "Copied glamour";
             }
+
             HelperUtil.DrawCreatePlateMenu(this.Ui, GetItems, ref this._nameInput);
 
             if (ImGui.Selectable("Try on")) {

@@ -251,7 +251,7 @@ namespace Glamaholic.Ui {
                     if (string.IsNullOrWhiteSpace(name)) {
                         continue;
                     }
-                    
+
                     var item = this.Items.Find(item => item.Name == name);
                     if (item == null) {
                         continue;

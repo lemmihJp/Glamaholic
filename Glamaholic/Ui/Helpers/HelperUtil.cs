@@ -93,7 +93,7 @@ namespace Glamaholic.Ui.Helpers {
 
         internal static bool DrawCreatePlateMenu(PluginUi ui, Func<Dictionary<PlateSlot, SavedGlamourItem>?> getter, ref string nameInput) {
             var ret = false;
-            
+
             if (!ImGui.BeginMenu("Create glamour plate")) {
                 return ret;
             }
@@ -107,6 +107,7 @@ namespace Glamaholic.Ui.Helpers {
                     ret = true;
                 }
             }
+
             ImGui.PopTextWrapPos();
 
             if (ImGui.IsWindowAppearing()) {
@@ -136,7 +137,7 @@ namespace Glamaholic.Ui.Helpers {
 
                 ImGui.EndChild();
             }
-                
+
             ImGui.EndMenu();
 
             return ret;
@@ -148,12 +149,13 @@ namespace Glamaholic.Ui.Helpers {
             };
 
             Configuration.SanitisePlate(plate);
-            
+
             if (idx == -1) {
                 ui.Plugin.Config.AddPlate(plate);
             } else {
                 ui.Plugin.Config.Plates[idx] = plate;
             }
+
             ui.Plugin.SaveConfig();
             ui.OpenMainInterface();
             ui.SwitchPlate(idx == -1 ? ui.Plugin.Config.Plates.Count - 1 : idx, true);
