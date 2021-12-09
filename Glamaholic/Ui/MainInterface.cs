@@ -62,7 +62,7 @@ namespace Glamaholic.Ui {
             this.Ui = ui;
 
             // get all equippable items that aren't soul crystals
-            this.Items = this.Ui.Plugin.DataManager.GetExcelSheet<Item>()!
+            this.Items = this.Ui.Plugin.DataManager.GetExcelSheet<Item>(ClientLanguage.English)!
                 .Where(row => row.EquipSlotCategory.Row is not 0 && row.EquipSlotCategory.Value!.SoulCrystal == 0)
                 .ToList();
             this.FilteredItems = this.Items;
