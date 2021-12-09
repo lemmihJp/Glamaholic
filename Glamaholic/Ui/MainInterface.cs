@@ -50,13 +50,13 @@ namespace Glamaholic.Ui {
         private string _importInput = string.Empty;
         private Exception? _importError;
         private bool _deleteConfirm;
-        private readonly Stopwatch _shareTimer = new();
         private bool _editing;
         private SavedPlate? _editingPlate;
         private string _itemFilter = string.Empty;
         private string _dyeFilter = string.Empty;
         private string _ecImport = string.Empty;
         private volatile bool _ecImporting;
+        private readonly Dictionary<string, Stopwatch> _timedMessages = new();
 
         internal MainInterface(PluginUi ui) {
             this.Ui = ui;
@@ -474,6 +474,15 @@ namespace Glamaholic.Ui {
                 ImGui.SetKeyboardFocusHere();
             }
 
+            if (GameFunctions.DresserContents.Count > 0) {
+                if (ImGui.Checkbox("Only show items in the armoire/dresser", ref this.Ui.Plugin.Config.ItemFilterShowObtainedOnly)) {
+                    this.Ui.Plugin.SaveConfig();
+                    this.FilterItems(slot);
+                }
+
+                ImGui.Separator();
+            }
+
             if (ImGui.BeginChild("item search", new Vector2(250, 450), false, ImGuiWindowFlags.HorizontalScrollbar)) {
                 uint? id;
                 if (plate.Items.TryGetValue(slot, out var slotMirage)) {
@@ -482,15 +491,25 @@ namespace Glamaholic.Ui {
                     id = null;
                 }
 
-                if (ImGui.Selectable("None (keep existing)", id == null)) {
+                if (ImGui.Selectable("##none-keep", id == null)) {
                     plate.Items.Remove(slot);
                     ImGui.CloseCurrentPopup();
                 }
 
-                if (ImGui.Selectable("None (remove existing)", id == 0)) {
+                ImGui.SameLine();
+                Util.TextIcon(FontAwesomeIcon.Box);
+                ImGui.SameLine();
+                ImGui.TextUnformatted("None (keep existing)");
+
+                if (ImGui.Selectable("##none-remove)", id == 0)) {
                     plate.Items[slot] = new SavedGlamourItem();
                     ImGui.CloseCurrentPopup();
                 }
+                
+                ImGui.SameLine();
+                Util.TextIcon(FontAwesomeIcon.Box);
+                ImGui.SameLine();
+                ImGui.TextUnformatted("None (remove existing)");
 
                 var clipper = new ImGuiListClipperPtr(ImGuiNative.ImGuiListClipper_ImGuiListClipper());
 
@@ -499,7 +518,7 @@ namespace Glamaholic.Ui {
                     for (var i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
                         var item = this.FilteredItems[i];
 
-                        if (ImGui.Selectable($"{item.Name}##{item.RowId}", item.RowId == id)) {
+                        if (ImGui.Selectable($"##{item.RowId}", item.RowId == id)) {
                             if (!plate.Items.ContainsKey(slot)) {
                                 plate.Items[slot] = new SavedGlamourItem();
                             }
@@ -515,6 +534,24 @@ namespace Glamaholic.Ui {
                         if (Util.IsItemMiddleOrCtrlClicked()) {
                             this.Ui.AlternativeFinders.Add(new AlternativeFinder(this.Ui, item));
                         }
+
+                        ImGui.SameLine();
+
+                        var has = GameFunctions.DresserContents.Any(saved => saved.ItemId % Util.HqItemOffset == item.RowId) || this.Ui.Plugin.Functions.IsInArmoire(item.RowId);
+
+                        if (!has) {
+                            ImGui.PushStyleColor(ImGuiCol.Text, ImGui.GetStyle().Colors[(int) ImGuiCol.TextDisabled]);
+                        }
+
+                        Util.TextIcon(FontAwesomeIcon.Box);
+
+                        if (!has) {
+                            ImGui.PopStyleColor();
+                        }
+
+                        ImGui.SameLine();
+
+                        ImGui.TextUnformatted($"{item.Name}");
                     }
                 }
 
@@ -524,7 +561,7 @@ namespace Glamaholic.Ui {
             ImGui.EndPopup();
         }
 
-        private unsafe void DrawIcon(PlateSlot slot, SavedPlate plate, bool editingPlate, int iconSize, int paddingSize) {
+        private unsafe void DrawIcon(PlateSlot slot, SavedPlate plate, int iconSize, int paddingSize) {
             var drawCursor = ImGui.GetCursorScreenPos();
             var tooltip = slot.Name();
             ImGui.BeginGroup();
@@ -534,7 +571,7 @@ namespace Glamaholic.Ui {
             var borderColour = *ImGui.GetStyleColorVec4(ImGuiCol.Border);
 
             // check for item
-            if (mirage != null && mirage.ItemId != 0 && editingPlate) {
+            if (mirage != null && mirage.ItemId != 0 && GameFunctions.DresserContents.Count > 0) {
                 var has = GameFunctions.DresserContents.Any(saved => saved.ItemId % Util.HqItemOffset == mirage.ItemId) || this.Ui.Plugin.Functions.IsInArmoire(mirage.ItemId);
                 if (!has) {
                     borderColour = ImGuiColors.DalamudYellow;
@@ -631,7 +668,7 @@ namespace Glamaholic.Ui {
             }
         }
 
-        private void DrawPlatePreview(bool editingPlate, SavedPlate plate) {
+        private void DrawPlatePreview(SavedPlate plate) {
             const int paddingSize = 12;
 
             if (!ImGui.BeginTable("plate item preview", 2, ImGuiTableFlags.SizingFixedFit)) {
@@ -640,9 +677,9 @@ namespace Glamaholic.Ui {
 
             foreach (var (left, right) in LeftSide.Zip(RightSide)) {
                 ImGui.TableNextColumn();
-                this.DrawIcon(left, plate, editingPlate, IconSize, paddingSize);
+                this.DrawIcon(left, plate, IconSize, paddingSize);
                 ImGui.TableNextColumn();
-                this.DrawIcon(right, plate, editingPlate, IconSize, paddingSize);
+                this.DrawIcon(right, plate, IconSize, paddingSize);
             }
 
             ImGui.EndTable();
@@ -655,6 +692,10 @@ namespace Glamaholic.Ui {
 
             ImGui.TableNextColumn();
             if (Util.IconButton(FontAwesomeIcon.Check, tooltip: "Apply")) {
+                if (!Util.IsEditingPlate(this.Ui.Plugin.GameGui)) {
+                    this.AddTimedMessage("The in-game plate editor must be open.");
+                }
+
                 this.Ui.Plugin.Functions.LoadPlate(plate);
             }
 
@@ -678,13 +719,13 @@ namespace Glamaholic.Ui {
             ImGui.TableNextColumn();
             if (Util.IconButton(FontAwesomeIcon.ShareAltSquare, tooltip: "Share")) {
                 ImGui.SetClipboardText(JsonConvert.SerializeObject(plate));
-                this._shareTimer.Start();
+                this.AddTimedMessage("Copied to clipboard.");
             }
 
             ImGui.EndTable();
         }
 
-        private void DrawPlateDetail(bool editingPlate) {
+        private void DrawPlateDetail() {
             if (!ImGui.BeginChild("plate detail")) {
                 return;
             }
@@ -692,14 +733,14 @@ namespace Glamaholic.Ui {
             if (this._selectedPlate > -1 && this._selectedPlate < this.Ui.Plugin.Config.Plates.Count) {
                 var plate = this._editingPlate ?? this.Ui.Plugin.Config.Plates[this._selectedPlate];
 
-                this.DrawPlatePreview(editingPlate, plate);
+                this.DrawPlatePreview(plate);
 
                 var renameWasVisible = this._showRename;
 
                 this.DrawPlateButtons(plate);
 
-                if (this._shareTimer.IsRunning) {
-                    Util.TextUnformattedWrapped("Copied to clipboard.");
+                foreach (var (msg, _) in this._timedMessages) {
+                    Util.TextUnformattedWrapped(msg);
                 }
 
                 if (this._showRename && Util.DrawTextInput("plate-rename", ref this._renameInput, flags: ImGuiInputTextFlags.AutoSelectAll)) {
@@ -710,12 +751,6 @@ namespace Glamaholic.Ui {
 
                 if (this._showRename && !renameWasVisible) {
                     ImGui.SetKeyboardFocusHere();
-                }
-
-                if (!this.Ui.Plugin.Functions.ArmoireLoaded) {
-                    ImGui.PushStyleColor(ImGuiCol.Text, ImGuiColors.DalamudYellow);
-                    Util.TextUnformattedWrapped("The Armoire is not loaded. Open it once to enable glamours from the Armoire.");
-                    ImGui.PopStyleColor();
                 }
 
                 if (this._editing) {
@@ -738,30 +773,65 @@ namespace Glamaholic.Ui {
             ImGui.EndChild();
         }
 
-        private void DrawInner() {
-            var editingPlate = Util.IsEditingPlate(this.Ui.Plugin.GameGui);
+        private void DrawWarnings() {
+            var warnings = new List<string>();
 
+            if (!this.Ui.Plugin.Functions.ArmoireLoaded) {
+                warnings.Add("The Armoire is not loaded. Open it once to enable glamours from the Armoire.");
+            }
+
+            if (GameFunctions.DresserContents.Count == 0) {
+                warnings.Add("Glamour Dresser is empty or has not been opened. Glamaholic will not know which items you have.");
+            }
+
+            if (warnings.Count == 0) {
+                return;
+            }
+            
+            ImGui.PushStyleColor(ImGuiCol.Text, ImGuiColors.DalamudYellow);
+            var header = ImGui.CollapsingHeader($"Warnings ({warnings.Count})###warnings");
+            ImGui.PopStyleColor();
+            
+            if (!header) {
+                return;
+            }
+
+            for (var i = 0; i < warnings.Count; i++) {
+                if (i != 0) {
+                    ImGui.Separator();
+                }
+                
+                Util.TextUnformattedWrapped(warnings[i]);
+            }
+        }
+
+        private void DrawInner() {
             this.DrawMenuBar();
 
-            if (!editingPlate) {
-                ImGui.PushStyleColor(ImGuiCol.Text, ImGuiColors.DalamudYellow);
-                Util.TextUnformattedWrapped("Glamour Plate editor is not open. Certain functions will not work.");
-                ImGui.PopStyleColor();
-            }
+            this.DrawWarnings();
 
             this.DrawPlateList();
 
             ImGui.SameLine();
 
-            this.DrawPlateDetail(editingPlate);
+            this.DrawPlateDetail();
 
             ImGui.End();
         }
 
         private void HandleTimers() {
-            if (this._shareTimer.Elapsed > TimeSpan.FromSeconds(5)) {
-                this._shareTimer.Reset();
+            var keys = this._timedMessages.Keys.ToArray();
+            foreach (var key in keys) {
+                if (this._timedMessages[key].Elapsed > TimeSpan.FromSeconds(5)) {
+                    this._timedMessages.Remove(key);
+                }
             }
+        }
+
+        private void AddTimedMessage(string message) {
+            var timer = new Stopwatch();
+            timer.Start();
+            this._timedMessages[message] = timer;
         }
 
         internal void SwitchPlate(int idx, bool scrollTo = false) {
@@ -770,7 +840,7 @@ namespace Glamaholic.Ui {
             this._renameInput = string.Empty;
             this._showRename = false;
             this._deleteConfirm = false;
-            this._shareTimer.Reset();
+            this._timedMessages.Clear();
             this.ResetEditing();
         }
 
@@ -783,7 +853,19 @@ namespace Glamaholic.Ui {
 
         private void FilterItems(PlateSlot slot) {
             var filter = this._itemFilter.ToLowerInvariant();
-            this.FilteredItems = this.Items
+
+            IEnumerable<Item> items;
+            if (GameFunctions.DresserContents.Count > 0 && this.Ui.Plugin.Config.ItemFilterShowObtainedOnly) {
+                var sheet = this.Ui.Plugin.DataManager.GetExcelSheet<Item>()!;
+                items = GameFunctions.DresserContents
+                    .Select(item => sheet.GetRow(item.ItemId))
+                    .Where(item => item != null)
+                    .Cast<Item>();
+            } else {
+                items = this.Items;
+            }
+
+            this.FilteredItems = items
                 .Where(item => !Util.IsItemSkipped(item))
                 .Where(item => Util.MatchesSlot(item.EquipSlotCategory.Value!, slot))
                 .Where(item => this._itemFilter.Length == 0 || item.Name.RawString.ToLowerInvariant().Contains(filter))

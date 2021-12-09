@@ -1,5 +1,6 @@
 ﻿using Dalamud.Data;
 using Dalamud.Game;
+using Dalamud.Game.ClientState;
 using Dalamud.Game.Command;
 using Dalamud.Game.Gui;
 using Dalamud.IoC;
@@ -16,12 +17,18 @@ namespace Glamaholic {
 
         [PluginService]
         internal ChatGui ChatGui { get; init; }
+        
+        [PluginService]
+        internal ClientState ClientState { get; init; }
 
         [PluginService]
         internal CommandManager CommandManager { get; init; }
 
         [PluginService]
         internal DataManager DataManager { get; init; }
+        
+        [PluginService]
+        internal Framework Framework { get; init; }
 
         [PluginService]
         internal GameGui GameGui { get; init; }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -59,9 +60,13 @@ namespace Glamaholic {
             this._examineNamePtr = this.Plugin.SigScanner.GetStaticAddressFromSig(Signatures.ExamineNamePointer);
 
             this.Plugin.ChatGui.ChatMessage += this.OnChat;
+            this.Plugin.ClientState.Login += OnLogin;
+            this.Plugin.Framework.Update += this.OnFrameworkUpdate;
         }
 
         public void Dispose() {
+            this.Plugin.Framework.Update -= this.OnFrameworkUpdate;
+            this.Plugin.ClientState.Login -= OnLogin;
             this.Plugin.ChatGui.ChatMessage -= this.OnChat;
         }
 
@@ -74,6 +79,22 @@ namespace Glamaholic {
                 isHandled = true;
             }
         }
+        
+        private static void OnLogin(object? sender, EventArgs e) {
+            _dresserContents = null;
+        }
+
+        private bool _wasEditing;
+        
+        private void OnFrameworkUpdate(Dalamud.Game.Framework framework) {
+            var editing = Util.IsEditingPlate(this.Plugin.GameGui);
+            if (!this._wasEditing && editing) {
+                // cache dresser
+                var unused = DresserContents;
+            }
+
+            this._wasEditing = editing;
+        }
 
         internal unsafe bool ArmoireLoaded => *(byte*) this._armoirePtr > 0;
 
@@ -81,8 +102,15 @@ namespace Glamaholic {
             ? null
             : MemoryHelper.ReadStringNullTerminated(this._examineNamePtr);
 
+        private static readonly Stopwatch DresserTimer = new();
+        private static List<GlamourItem>? _dresserContents;
+
         internal static unsafe List<GlamourItem> DresserContents {
             get {
+                if (_dresserContents != null && DresserTimer.Elapsed < TimeSpan.FromSeconds(1)) {
+                    return _dresserContents;
+                }
+
                 var list = new List<GlamourItem>();
 
                 var agents = Framework.Instance()->GetUiModule()->GetAgentModule();
@@ -91,7 +119,7 @@ namespace Glamaholic {
 
                 var itemsStart = *(IntPtr*) ((IntPtr) dresserAgent + 0x28);
                 if (itemsStart == IntPtr.Zero) {
-                    return list;
+                    return _dresserContents ?? list;
                 }
 
                 for (var i = 0; i < 400; i++) {
@@ -102,6 +130,9 @@ namespace Glamaholic {
 
                     list.Add(glamItem);
                 }
+
+                _dresserContents = list;
+                DresserTimer.Restart();
 
                 return list;
             }

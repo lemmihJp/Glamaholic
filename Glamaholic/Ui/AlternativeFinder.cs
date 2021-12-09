@@ -83,17 +83,15 @@ namespace Glamaholic.Ui {
 
                 ImGui.SameLine();
 
-                ImGui.PushFont(UiBuilder.IconFont);
                 if (!alt.IsDyeable) {
                     ImGui.PushStyleColor(ImGuiCol.Text, ImGui.GetStyle().Colors[(int) ImGuiCol.TextDisabled]);
                 }
 
-                ImGui.TextUnformatted(FontAwesomeIcon.FillDrip.ToIconString());
+                Util.TextIcon(FontAwesomeIcon.FillDrip);
+
                 if (!alt.IsDyeable) {
                     ImGui.PopStyleColor();
                 }
-
-                ImGui.PopFont();
 
                 ImGui.SameLine();
                 ImGui.TextUnformatted(alt.Name);

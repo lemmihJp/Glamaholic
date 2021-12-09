@@ -160,5 +160,11 @@ namespace Glamaholic {
                 _ => name.Length == 0 || name.StartsWith("Dated"),
             };
         }
+
+        internal static void TextIcon(FontAwesomeIcon icon) {
+            ImGui.PushFont(UiBuilder.IconFont);
+            ImGui.TextUnformatted(icon.ToIconString());
+            ImGui.PopFont();
+        }
     }
 }
