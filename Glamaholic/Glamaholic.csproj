@@ -52,23 +52,14 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="DalamudLinter"
-                          Version="1.0.3"/>
-        <PackageReference Include="DalamudPackager"
-                          Version="2.1.5"/>
-        <PackageReference Include="Fody"
-                          Version="6.6.0"
-                          PrivateAssets="all"/>
-        <PackageReference Include="Resourcer.Fody"
-                          Version="1.8.0"
-                          PrivateAssets="all"/>
+        <PackageReference Include="DalamudLinter" Version="1.0.3"/>
+        <PackageReference Include="DalamudPackager" Version="2.1.5"/>
+        <PackageReference Include="Fody" Version="6.6.0" PrivateAssets="all"/>
+        <PackageReference Include="Resourcer.Fody" Version="1.8.0" PrivateAssets="all"/>
     </ItemGroup>
 
     <ItemGroup>
-        <Content Include="..\icon.png"
-                 Link="images/icon.png"
-                 CopyToOutputDirectory="PreserveNewest"
-                 Visible="false"/>
+        <Content Include="..\icon.png" Link="images/icon.png" CopyToOutputDirectory="PreserveNewest" Visible="false"/>
     </ItemGroup>
 
     <ItemGroup>
