@@ -59,6 +59,7 @@ namespace Glamaholic.Ui {
         private string _dyeFilter = string.Empty;
         private volatile bool _ecImporting;
         private readonly Dictionary<string, Stopwatch> _timedMessages = new();
+        private string _tagInput = string.Empty;
 
         internal MainInterface(PluginUi ui) {
             this.Ui = ui;
@@ -708,6 +709,47 @@ namespace Glamaholic.Ui {
             ImGui.EndTable();
         }
 
+        private void DrawPlateTags(SavedPlate plate) {
+            if (this._editing) {
+                return;
+            }
+
+            if (!ImGui.CollapsingHeader($"Tags ({plate.Tags.Count})###plate-tags")) {
+                return;
+            }
+            
+            ImGui.SetNextItemWidth(-1);
+            if (ImGui.InputTextWithHint("##tag-input", "Input a tag and press Enter", ref this._tagInput, 128, ImGuiInputTextFlags.EnterReturnsTrue)) {
+                if (!plate.Tags.Contains(this._tagInput)) {
+                    plate.Tags.Add(this._tagInput);
+                    this.Ui.Plugin.SaveConfig();
+                }
+                
+                this._tagInput = string.Empty;
+            }
+
+            if (ImGui.BeginChild("tag-list")) {
+                var toRemove = -1;
+                for (var i = 0; i < plate.Tags.Count; i++) {
+                    var tag = plate.Tags[i];
+
+                    if (Util.IconButton(FontAwesomeIcon.Times)) {
+                        toRemove = i;
+                    }
+                
+                    ImGui.SameLine();
+                    ImGui.TextUnformatted(tag);
+                }
+
+                if (toRemove > -1) {
+                    plate.Tags.RemoveAt(toRemove);
+                    this.Ui.Plugin.SaveConfig();
+                }
+                
+                ImGui.EndChild();
+            }
+        }
+
         private void DrawPlateDetail() {
             if (!ImGui.BeginChild("plate detail")) {
                 return;
@@ -751,6 +793,8 @@ namespace Glamaholic.Ui {
                         this.ResetEditing();
                     }
                 }
+
+                this.DrawPlateTags(plate);
             }
 
             ImGui.EndChild();
@@ -861,13 +905,39 @@ namespace Glamaholic.Ui {
             private uint MaxLevel { get; }
             private string Query { get; }
             private HashSet<ClassJob> WantedJobs { get; } = new();
+            private HashSet<string> Tags { get; } = new();
 
             internal FilterInfo(DataManager data, string filter) {
                 this.Data = data;
 
                 var queryWords = new List<string>();
 
-                foreach (var word in filter.Split(' ')) {
+                string? quotedTag = null;
+                foreach (var immutableWord in filter.Split(' ')) {
+                    var word = immutableWord;
+                    
+                    if (quotedTag != null) {
+                        quotedTag += " ";
+                        
+                        var quoteIndex = word.IndexOf('"');
+                        if (quoteIndex > -1) {
+                            quotedTag += word[..quoteIndex];
+
+                            this.Tags.Add(quotedTag);
+                            quotedTag = null;
+                            
+                            var rest = word[(quoteIndex + 1)..];
+                            if (rest.Length > 0) {
+                                word = rest;
+                            } else {
+                                continue;
+                            }
+                        } else {
+                            quotedTag += word;
+                            continue;
+                        }
+                    }
+                    
                     if (word.StartsWith("j:")) {
                         var abbr = word[2..].ToLowerInvariant();
                         var job = this.Data.GetExcelSheet<ClassJob>()!.FirstOrDefault(row => row.Abbreviation.RawString.ToLowerInvariant() == abbr);
@@ -886,6 +956,16 @@ namespace Glamaholic.Ui {
                         continue;
                     }
 
+                    if (word.StartsWith("t:")) {
+                        if (word.StartsWith("t:\"")) {
+                            quotedTag = word[3..];
+                        } else {
+                            this.Tags.Add(word[2..]);
+                        }
+                        
+                        continue;
+                    }
+
                     queryWords.Add(word);
                 }
 
@@ -899,8 +979,14 @@ namespace Glamaholic.Ui {
                 }
 
                 // if there's nothing custom about this filter, this is a match
-                if (this.MaxLevel == 0 && this.WantedJobs.Count == 0) {
+                if (this.MaxLevel == 0 && this.WantedJobs.Count == 0 && this.Tags.Count == 0) {
                     return true;
+                }
+
+                foreach (var tag in this.Tags) {
+                    if (!plate.Tags.Contains(tag)) {
+                        return false;
+                    }
                 }
 
                 foreach (var mirage in plate.Items.Values) {
