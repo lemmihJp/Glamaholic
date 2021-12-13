@@ -728,9 +728,9 @@ namespace Glamaholic.Ui {
                         plate.Tags.Sort();
                         this.Ui.Plugin.SaveConfig();
                     }
-
-                    this._tagInput = string.Empty;
                 }
+
+                this._tagInput = string.Empty;
             }
 
             if (ImGui.BeginChild("tag-list")) {
