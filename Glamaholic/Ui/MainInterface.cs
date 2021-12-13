@@ -125,7 +125,7 @@ namespace Glamaholic.Ui {
 
                 if (ImGui.BeginMenu("Import")) {
                     if (ImGui.MenuItem("Clipboard")) {
-                        var json = ImGui.GetClipboardText();
+                        var json = Util.GetClipboardText();
                         try {
                             var plate = JsonConvert.DeserializeObject<SharedPlate>(json);
                             if (plate != null) {
@@ -138,9 +138,9 @@ namespace Glamaholic.Ui {
                         }
                     }
 
-                    var validUrl = IsValidEorzeaCollectionUrl(ImGui.GetClipboardText());
+                    var validUrl = IsValidEorzeaCollectionUrl(Util.GetClipboardText());
                     if (ImGui.MenuItem("Copied Eorzea Collection URL", validUrl) && !this._ecImporting) {
-                        this.ImportEorzeaCollection(ImGui.GetClipboardText());
+                        this.ImportEorzeaCollection(Util.GetClipboardText());
                     }
 
                     ImGui.EndMenu();

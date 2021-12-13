@@ -166,5 +166,13 @@ namespace Glamaholic {
             ImGui.TextUnformatted(icon.ToIconString());
             ImGui.PopFont();
         }
+
+        internal static string GetClipboardText() {
+            try {
+                return ImGui.GetClipboardText();
+            } catch (Exception) {
+                return string.Empty;
+            }
+        }
     }
 }
