@@ -907,6 +907,7 @@ namespace Glamaholic.Ui {
             private string Query { get; }
             private HashSet<ClassJob> WantedJobs { get; } = new();
             private HashSet<string> Tags { get; } = new();
+            private HashSet<string> ExcludeTags { get; } = new();
             private HashSet<uint> ItemIds { get; } = new();
             private HashSet<string> ItemNames { get; } = new();
 
@@ -933,6 +934,9 @@ namespace Glamaholic.Ui {
                                     break;
                                 case 2:
                                     this.ItemNames.Add(quoted);
+                                    break;
+                                case 3:
+                                    this.ExcludeTags.Add(quoted);
                                     break;
                             }
 
@@ -984,6 +988,21 @@ namespace Glamaholic.Ui {
                         continue;
                     }
 
+                    if (word.StartsWith("!t:")) {
+                        if (word.StartsWith("!t:\"")) {
+                            if (word.EndsWith('"') && word.Length >= 6) {
+                                this.ExcludeTags.Add(word[4..^1]);
+                            } else {
+                                quoteType = 3;
+                                quoted = word[4..];
+                            }
+                        } else {
+                            this.ExcludeTags.Add(word[3..]);
+                        }
+
+                        continue;
+                    }
+
                     if (word.StartsWith("id:")) {
                         if (uint.TryParse(word[3..], out var id)) {
                             this.ItemIds.Add(id);
@@ -1020,12 +1039,24 @@ namespace Glamaholic.Ui {
                 }
 
                 // if there's nothing custom about this filter, this is a match
-                if (this.MaxLevel == 0 && this.WantedJobs.Count == 0 && this.Tags.Count == 0 && this.ItemIds.Count == 0 && this.ItemNames.Count == 0) {
+                var notCustom = this.MaxLevel == 0
+                                && this.WantedJobs.Count == 0
+                                && this.Tags.Count == 0
+                                && this.ExcludeTags.Count == 0
+                                && this.ItemIds.Count == 0
+                                && this.ItemNames.Count == 0;
+                if (notCustom) {
                     return true;
                 }
 
                 foreach (var tag in this.Tags) {
                     if (!plate.Tags.Contains(tag)) {
+                        return false;
+                    }
+                }
+
+                foreach (var tag in this.ExcludeTags) {
+                    if (plate.Tags.Contains(tag)) {
                         return false;
                     }
                 }
