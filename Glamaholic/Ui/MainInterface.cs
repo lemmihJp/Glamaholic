@@ -720,13 +720,17 @@ namespace Glamaholic.Ui {
 
             ImGui.SetNextItemWidth(-1);
             if (ImGui.InputTextWithHint("##tag-input", "Input a tag and press Enter", ref this._tagInput, 128, ImGuiInputTextFlags.EnterReturnsTrue)) {
-                if (!plate.Tags.Contains(this._tagInput)) {
-                    plate.Tags.Add(this._tagInput);
-                    plate.Tags.Sort();
-                    this.Ui.Plugin.SaveConfig();
-                }
+                if (!string.IsNullOrWhiteSpace(this._tagInput)) {
+                    var tag = this._tagInput.Trim();
 
-                this._tagInput = string.Empty;
+                    if (!plate.Tags.Contains(tag)) {
+                        plate.Tags.Add(tag);
+                        plate.Tags.Sort();
+                        this.Ui.Plugin.SaveConfig();
+                    }
+
+                    this._tagInput = string.Empty;
+                }
             }
 
             if (ImGui.BeginChild("tag-list")) {
