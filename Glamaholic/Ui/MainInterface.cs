@@ -5,10 +5,13 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Numerics;
+using System.Reflection;
 using System.Threading.Tasks;
 using Dalamud;
+using Dalamud.Data;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
+using Dalamud.Logging;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using Newtonsoft.Json;
@@ -49,14 +52,11 @@ namespace Glamaholic.Ui {
         private string _plateFilter = string.Empty;
         private bool _showRename;
         private string _renameInput = string.Empty;
-        private string _importInput = string.Empty;
-        private Exception? _importError;
         private bool _deleteConfirm;
         private bool _editing;
         private SavedPlate? _editingPlate;
         private string _itemFilter = string.Empty;
         private string _dyeFilter = string.Empty;
-        private string _ecImport = string.Empty;
         private volatile bool _ecImporting;
         private readonly Dictionary<string, Stopwatch> _timedMessages = new();
 
@@ -102,6 +102,14 @@ namespace Glamaholic.Ui {
             ImGui.End();
         }
 
+        private static bool IsValidEorzeaCollectionUrl(string urlString) {
+            if (!Uri.TryCreate(urlString, UriKind.Absolute, out var url)) {
+                return false;
+            }
+
+            return url.Host == "ffxiv.eorzeacollection.com" && url.AbsolutePath.StartsWith("/glamour/");
+        }
+
         private void DrawMenuBar() {
             if (!ImGui.BeginMenuBar()) {
                 return;
@@ -115,49 +123,25 @@ namespace Glamaholic.Ui {
                 }
 
                 if (ImGui.BeginMenu("Import")) {
-                    if (Util.DrawTextInput("import-input", ref this._importInput, 2048, "Press Enter to import.")) {
+                    if (ImGui.MenuItem("Clipboard")) {
+                        var json = ImGui.GetClipboardText();
                         try {
-                            var plate = JsonConvert.DeserializeObject<SavedPlate>(this._importInput);
-                            this._importError = null;
+                            var plate = JsonConvert.DeserializeObject<SharedPlate>(json);
                             if (plate != null) {
-                                this.Ui.Plugin.Config.AddPlate(plate);
+                                this.Ui.Plugin.Config.AddPlate(plate.ToPlate());
                                 this.Ui.Plugin.SaveConfig();
+                                this.Ui.SwitchPlate(this.Ui.Plugin.Config.Plates.Count - 1);
                             }
-
-                            this._importInput = string.Empty;
                         } catch (Exception ex) {
-                            this._importError = ex;
+                            PluginLog.LogWarning(ex, "Failed to import glamour plate");
                         }
                     }
 
-                    if (ImGui.IsWindowAppearing()) {
-                        this._importError = null;
-                        ImGui.SetKeyboardFocusHere();
-                    }
-
-                    if (this._importError != null) {
-                        ImGui.PushStyleColor(ImGuiCol.Text, ImGuiColors.DalamudRed);
-                        Util.TextUnformattedWrapped(this._importError.Message);
-                        ImGui.PopStyleColor();
-                    }
-
-                    ImGui.EndMenu();
-                }
-
-                if (ImGui.BeginMenu("Import from Eorzea Collection")) {
-                    const string msg = "Enter an Eorzea Collection glamour URL and press Enter.";
-                    if (Util.DrawTextInput("ec-import", ref this._ecImport, message: msg, flags: ImGuiInputTextFlags.AutoSelectAll) && !this._ecImporting) {
-                        this.ImportEorzeaCollection();
-                    }
-
-                    if (ImGui.IsWindowAppearing()) {
-                        ImGui.SetKeyboardFocusHere();
-                    }
-
-                    if (this._ecImporting) {
-                        ImGui.TextUnformatted("Working...");
-                    }
-
+                    var validUrl = IsValidEorzeaCollectionUrl(ImGui.GetClipboardText());
+                    if (ImGui.MenuItem("Copied Eorzea Collection URL", validUrl) && !this._ecImporting) {
+                        this.ImportEorzeaCollection(ImGui.GetClipboardText());
+                    }   
+                    
                     ImGui.EndMenu();
                 }
 
@@ -217,13 +201,8 @@ namespace Glamaholic.Ui {
             ImGui.EndMenuBar();
         }
 
-        private void ImportEorzeaCollection() {
-            try {
-                var uri = new Uri(this._ecImport);
-                if (uri.Host != "ffxiv.eorzeacollection.com") {
-                    return;
-                }
-            } catch (Exception) {
+        private void ImportEorzeaCollection(string url) {
+            if (!IsValidEorzeaCollectionUrl(url)) {
                 return;
             }
 
@@ -233,7 +212,7 @@ namespace Glamaholic.Ui {
                 var items = new Dictionary<PlateSlot, SavedGlamourItem>();
 
                 var client = new HttpClient();
-                var resp = await client.GetAsync(this._ecImport);
+                var resp = await client.GetAsync(url);
                 var html = await resp.Content.ReadAsStringAsync();
 
                 var titleParts = html.Split("<title>");
@@ -283,7 +262,6 @@ namespace Glamaholic.Ui {
                 this.Ui.Plugin.Config.AddPlate(plate);
                 this.Ui.Plugin.SaveConfig();
                 this.SwitchPlate(this.Ui.Plugin.Config.Plates.Count - 1, true);
-                this._ecImport = string.Empty;
             });
         }
 
@@ -510,7 +488,7 @@ namespace Glamaholic.Ui {
                     plate.Items[slot] = new SavedGlamourItem();
                     ImGui.CloseCurrentPopup();
                 }
-                
+
                 ImGui.SameLine();
                 Util.TextIcon(FontAwesomeIcon.Box);
                 ImGui.SameLine();
@@ -723,7 +701,7 @@ namespace Glamaholic.Ui {
 
             ImGui.TableNextColumn();
             if (Util.IconButton(FontAwesomeIcon.ShareAltSquare, tooltip: "Share")) {
-                ImGui.SetClipboardText(JsonConvert.SerializeObject(plate));
+                ImGui.SetClipboardText(JsonConvert.SerializeObject(new SharedPlate(plate)));
                 this.AddTimedMessage("Copied to clipboard.");
             }
 
@@ -792,11 +770,11 @@ namespace Glamaholic.Ui {
             if (warnings.Count == 0) {
                 return;
             }
-            
+
             ImGui.PushStyleColor(ImGuiCol.Text, ImGuiColors.DalamudYellow);
             var header = ImGui.CollapsingHeader($"Warnings ({warnings.Count})###warnings");
             ImGui.PopStyleColor();
-            
+
             if (!header) {
                 return;
             }
@@ -805,7 +783,7 @@ namespace Glamaholic.Ui {
                 if (i != 0) {
                     ImGui.Separator();
                 }
-                
+
                 Util.TextUnformattedWrapped(warnings[i]);
             }
         }
