@@ -40,6 +40,8 @@ namespace Glamaholic.Ui {
         private List<Item> FilteredItems { get; set; }
         private Dictionary<string, byte> Stains { get; }
 
+        private FilterInfo? PlateFilter { get; set; }
+
         private bool _visible;
         private int _dragging = -1;
         private int _selectedPlate = -1;
@@ -308,15 +310,18 @@ namespace Glamaholic.Ui {
             }
 
             ImGui.SetNextItemWidth(-1);
-            ImGui.InputText("##plate-filter", ref this._plateFilter, 512, ImGuiInputTextFlags.AutoSelectAll);
+            if (ImGui.InputText("##plate-filter", ref this._plateFilter, 512, ImGuiInputTextFlags.AutoSelectAll)) {
+                this.PlateFilter = this._plateFilter.Length == 0
+                    ? null
+                    : new FilterInfo(this.Ui.Plugin.DataManager, this._plateFilter);
+            }
 
-            var filter = this._plateFilter.ToLowerInvariant();
             (int src, int dst)? drag = null;
             if (ImGui.BeginChild("plate list actual", Vector2.Zero, false, ImGuiWindowFlags.HorizontalScrollbar)) {
                 for (var i = 0; i < this.Ui.Plugin.Config.Plates.Count; i++) {
                     var plate = this.Ui.Plugin.Config.Plates[i];
 
-                    if (filter.Length != 0 && !plate.Name.ToLowerInvariant().Contains(filter)) {
+                    if (this.PlateFilter != null && !this.PlateFilter.Matches(plate)) {
                         continue;
                     }
 
@@ -870,6 +875,96 @@ namespace Glamaholic.Ui {
                 .Where(item => Util.MatchesSlot(item.EquipSlotCategory.Value!, slot))
                 .Where(item => this._itemFilter.Length == 0 || item.Name.RawString.ToLowerInvariant().Contains(filter))
                 .ToList();
+        }
+
+        private class FilterInfo {
+            private DataManager Data { get; }
+
+            private uint MaxLevel { get; }
+            private string Query { get; }
+            private HashSet<ClassJob> WantedJobs { get; } = new();
+
+            internal FilterInfo(DataManager data, string filter) {
+                this.Data = data;
+
+                var queryWords = new List<string>();
+
+                foreach (var word in filter.Split(' ')) {
+                    if (word.StartsWith("j:")) {
+                        var abbr = word[2..].ToLowerInvariant();
+                        var job = this.Data.GetExcelSheet<ClassJob>()!.FirstOrDefault(row => row.Abbreviation.RawString.ToLowerInvariant() == abbr);
+                        if (job != null) {
+                            this.WantedJobs.Add(job);
+                        }
+
+                        continue;
+                    }
+
+                    if (word.StartsWith("lvl:")) {
+                        if (uint.TryParse(word[4..], out var level)) {
+                            this.MaxLevel = level;
+                        }
+
+                        continue;
+                    }
+
+                    queryWords.Add(word);
+                }
+
+                this.Query = string.Join(' ', queryWords).ToLowerInvariant();
+            }
+
+            internal bool Matches(SavedPlate plate) {
+                // if the name doesn't match the query, it's not a match, obviously
+                if (this.Query.Length != 0 && !plate.Name.ToLowerInvariant().Contains(this.Query)) {
+                    return false;
+                }
+
+                // if there's nothing custom about this filter, this is a match
+                if (this.MaxLevel == 0 && this.WantedJobs.Count == 0) {
+                    return true;
+                }
+
+                foreach (var mirage in plate.Items.Values) {
+                    var item = this.Data.GetExcelSheet<Item>()!.GetRow(mirage.ItemId % Util.HqItemOffset);
+                    if (item == null) {
+                        continue;
+                    }
+
+                    if (this.MaxLevel != 0 && item.LevelEquip > this.MaxLevel) {
+                        return false;
+                    }
+
+                    foreach (var job in this.WantedJobs) {
+                        var category = item.ClassJobCategory.Value;
+                        if (category == null) {
+                            continue;
+                        }
+
+                        if (!this.CanWear(category, job)) {
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            }
+
+            private bool CanWear(ClassJobCategory category, ClassJob classJob) {
+                // get english version
+                var job = this.Data.GetExcelSheet<ClassJob>(ClientLanguage.English)!.GetRow(classJob.RowId)!;
+                var getter = category.GetType().GetProperty(job.Abbreviation.RawString, BindingFlags.Public | BindingFlags.Instance);
+                if (getter == null) {
+                    return false;
+                }
+
+                var value = getter.GetValue(category);
+                if (value is bool res) {
+                    return res;
+                }
+
+                return false;
+            }
         }
     }
 }
