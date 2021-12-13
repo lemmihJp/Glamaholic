@@ -30,3 +30,24 @@ You can search for items that share the same model as another item by either
 middle-clicking (click with mouse wheel) or holding Control and left-clicking on 
 any item name or item icon. This will open a window listing items with the same
 model where you can link or try them on.
+
+---
+
+# Advanced search
+
+The plate search box can be used to search for more than just plate names. Try
+the options below.
+
+- j:job can be used to search for a job by its abbreviation. Example: j:pld
+
+- lvl:maxLevel can be used to search for plates equippable up to a specific
+level. Example: lvl:1
+
+- t:tag can be used to search by tag.
+
+- !t:tag can be used to exclude tags.
+
+- id:itemId can be used to search for plates with the given item ID.
+
+- i:itemName can be used to search for plates with the given item name. Example:
+i:skallic
