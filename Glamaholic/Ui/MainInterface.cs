@@ -736,7 +736,7 @@ namespace Glamaholic.Ui {
                 for (var i = 0; i < plate.Tags.Count; i++) {
                     var tag = plate.Tags[i];
 
-                    if (Util.IconButton(FontAwesomeIcon.Times, $"{i}")) {
+                    if (Util.IconButton(FontAwesomeIcon.Times, $"remove-tag-{i}")) {
                         toRemove = i;
                     }
 
