@@ -676,9 +676,9 @@ namespace Glamaholic.Ui {
             if (Util.IconButton(FontAwesomeIcon.Check, tooltip: "Apply")) {
                 if (!Util.IsEditingPlate(this.Ui.Plugin.GameGui)) {
                     this.AddTimedMessage("The in-game plate editor must be open.");
+                } else {
+                    this.Ui.Plugin.Functions.LoadPlate(plate);
                 }
-
-                this.Ui.Plugin.Functions.LoadPlate(plate);
             }
 
             ImGui.TableNextColumn();
