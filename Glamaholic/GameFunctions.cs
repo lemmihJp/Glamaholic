@@ -114,8 +114,7 @@ namespace Glamaholic {
                 var list = new List<GlamourItem>();
 
                 var agents = Framework.Instance()->GetUiModule()->GetAgentModule();
-                // TODO: replace with AgentId.MiragePrismPrismBox when ClientStructs is updated
-                var dresserAgent = agents->GetAgentByInternalId((AgentId) 292);
+                var dresserAgent = agents->GetAgentByInternalId(AgentId.MiragePrismPrismBox);
 
                 var itemsStart = *(IntPtr*) ((IntPtr) dresserAgent + 0x28);
                 if (itemsStart == IntPtr.Zero) {
@@ -171,7 +170,7 @@ namespace Glamaholic {
             }
         }
 
-        private static unsafe AgentInterface* EditorAgent => Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId((AgentId) 294);
+        private static unsafe AgentInterface* EditorAgent => Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.MiragePrismMiragePlate);
 
         internal unsafe void SetGlamourPlateSlot(MirageSource source, int glamId, uint itemId, byte stainId) {
             this._setGlamourPlateSlot((IntPtr) EditorAgent, source, glamId, itemId, stainId);

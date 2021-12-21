@@ -47,8 +47,7 @@ namespace Glamaholic.Ui.Helpers {
         }
 
         private static unsafe Dictionary<PlateSlot, SavedGlamourItem> GetTryOnItems() {
-            // TODO: replace with AgentId.Tryon once ClientStructs is updated for new agents
-            var agent = (IntPtr) Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId((AgentId) 147);
+            var agent = (IntPtr) Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.Tryon);
             var firstItem = agent + 0x2E8;
 
             var items = new Dictionary<PlateSlot, SavedGlamourItem>();
