@@ -63,11 +63,15 @@ namespace Glamaholic.Ui.Helpers {
                     itemId = item->GlamourId;
                 }
 
+                var stainId = item->StainPreviewId == 0
+                    ? item->StainId
+                    : item->StainPreviewId;
+
                 // for some reason, this still accounts for belts in EW
                 var slot = item->Slot > 5 ? item->Slot - 1 : item->Slot;
                 items[(PlateSlot) slot] = new SavedGlamourItem {
                     ItemId = itemId % Util.HqItemOffset,
-                    StainId = item->StainId,
+                    StainId = stainId,
                 };
             }
 
@@ -81,6 +85,9 @@ namespace Glamaholic.Ui.Helpers {
 
             [FieldOffset(2)]
             internal readonly byte StainId;
+
+            [FieldOffset(3)]
+            internal readonly byte StainPreviewId;
 
             [FieldOffset(5)]
             internal readonly byte UnknownByte;

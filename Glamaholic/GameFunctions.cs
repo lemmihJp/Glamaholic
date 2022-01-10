@@ -153,8 +153,12 @@ namespace Glamaholic {
                 foreach (var slot in (PlateSlot[]) Enum.GetValues(typeof(PlateSlot))) {
                     // Updated: 6.0
                     // from SetGlamourPlateSlot
-                    var itemId = *(uint*) (editorInfo + 44 * (int) slot + 7956);
-                    var stainId = *(byte*) (editorInfo + 44 * (int) slot + 7980);
+                    var item = editorInfo + 44 * (int) slot + 7956;
+
+                    var itemId = *(uint*) item;
+                    var stainId = *(byte*) (item + 24);
+                    var stainPreviewId = *(byte*) (item + 25);
+                    var actualStainId = stainPreviewId == 0 ? stainId : stainPreviewId;
 
                     if (itemId == 0) {
                         continue;
@@ -162,7 +166,7 @@ namespace Glamaholic {
 
                     plate[slot] = new SavedGlamourItem {
                         ItemId = itemId,
-                        StainId = stainId,
+                        StainId = actualStainId,
                     };
                 }
 
