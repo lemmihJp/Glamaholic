@@ -79,13 +79,13 @@ namespace Glamaholic {
                 isHandled = true;
             }
         }
-        
+
         private static void OnLogin(object? sender, EventArgs e) {
             _dresserContents = null;
         }
 
         private bool _wasEditing;
-        
+
         private void OnFrameworkUpdate(Dalamud.Game.Framework framework) {
             var editing = Util.IsEditingPlate(this.Plugin.GameGui);
             if (!this._wasEditing && editing) {

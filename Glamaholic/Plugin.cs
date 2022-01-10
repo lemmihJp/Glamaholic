@@ -17,7 +17,7 @@ namespace Glamaholic {
 
         [PluginService]
         internal ChatGui ChatGui { get; init; }
-        
+
         [PluginService]
         internal ClientState ClientState { get; init; }
 
@@ -26,7 +26,7 @@ namespace Glamaholic {
 
         [PluginService]
         internal DataManager DataManager { get; init; }
-        
+
         [PluginService]
         internal Framework Framework { get; init; }
 
