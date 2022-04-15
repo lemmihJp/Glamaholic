@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>net5.0-windows</TargetFramework>
-        <Version>1.9.3</Version>
+        <Version>1.9.4</Version>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <Nullable>enable</Nullable>
         <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
@@ -53,7 +53,7 @@
 
     <ItemGroup>
         <PackageReference Include="DalamudLinter" Version="1.0.3"/>
-        <PackageReference Include="DalamudPackager" Version="2.1.5"/>
+        <PackageReference Include="DalamudPackager" Version="2.1.6"/>
         <PackageReference Include="Fody" Version="6.6.0" PrivateAssets="all"/>
         <PackageReference Include="Resourcer.Fody" Version="1.8.0" PrivateAssets="all"/>
     </ItemGroup>
