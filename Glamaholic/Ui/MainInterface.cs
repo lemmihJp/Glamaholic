@@ -287,7 +287,7 @@ namespace Glamaholic.Ui {
             }
 
             ImGui.SetNextItemWidth(-1);
-            if (ImGui.InputText("##plate-filter", ref this._plateFilter, 512, ImGuiInputTextFlags.AutoSelectAll)) {
+            if (ImGui.InputTextWithHint("##plate-filter", "Search...", ref this._plateFilter, 512, ImGuiInputTextFlags.AutoSelectAll)) {
                 this.PlateFilter = this._plateFilter.Length == 0
                     ? null
                     : new FilterInfo(this.Ui.Plugin.DataManager, this._plateFilter);
@@ -448,7 +448,7 @@ namespace Glamaholic.Ui {
             }
 
             ImGui.SetNextItemWidth(-1);
-            if (ImGui.InputText("##item-filter", ref this._itemFilter, 512, ImGuiInputTextFlags.AutoSelectAll)) {
+            if (ImGui.InputTextWithHint("##item-filter", "Search...", ref this._itemFilter, 512, ImGuiInputTextFlags.AutoSelectAll)) {
                 this.FilterItems(slot);
             }
 

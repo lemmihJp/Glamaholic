@@ -8,6 +8,7 @@ using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Memory;
+using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -26,6 +27,8 @@ namespace Glamaholic {
             internal const string ExamineNamePointer = "48 8D 05 ?? ?? ?? ?? 48 89 85 ?? ?? ?? ?? 74 56 49 8B 4F";
         }
 
+        #region Delegates
+
         private delegate void SetGlamourPlateSlotDelegate(IntPtr agent, MirageSource mirageSource, int glamId, uint itemId, byte stainId);
 
         private delegate void ModifyGlamourPlateSlotDelegate(IntPtr agent, PlateSlot slot, byte stainId, IntPtr numbers, int stainItemId);
@@ -36,28 +39,41 @@ namespace Glamaholic {
 
         private delegate byte TryOnDelegate(uint unknownCanEquip, uint itemBaseId, ulong stainColor, uint itemGlamourId, byte unknownByte);
 
+        #endregion
+
         private Plugin Plugin { get; }
 
-        private readonly SetGlamourPlateSlotDelegate _setGlamourPlateSlot;
-        private readonly ModifyGlamourPlateSlotDelegate _modifyGlamourPlateSlot;
-        private readonly ClearGlamourPlateSlotDelegate _clearGlamourPlateSlot;
-        private readonly IsInArmoireDelegate _isInArmoire;
+        #region Functions
+
+        [Signature(Signatures.SetGlamourPlateSlot)]
+        private readonly SetGlamourPlateSlotDelegate _setGlamourPlateSlot = null!;
+
+        [Signature(Signatures.ModifyGlamourPlateSlot)]
+        private readonly ModifyGlamourPlateSlotDelegate _modifyGlamourPlateSlot = null!;
+
+        [Signature(Signatures.ClearGlamourPlateSlot)]
+        private readonly ClearGlamourPlateSlotDelegate _clearGlamourPlateSlot = null!;
+
+        [Signature(Signatures.IsInArmoire)]
+        private readonly IsInArmoireDelegate _isInArmoire = null!;
+
+        [Signature(Signatures.ArmoirePointer, ScanType = ScanType.StaticAddress)]
         private readonly IntPtr _armoirePtr;
-        private readonly TryOnDelegate _tryOn;
+
+        [Signature(Signatures.TryOn)]
+        private readonly TryOnDelegate _tryOn = null!;
+
+        [Signature(Signatures.ExamineNamePointer, ScanType = ScanType.StaticAddress)]
         private readonly IntPtr _examineNamePtr;
+
+        #endregion
 
         private readonly List<uint> _filterIds = new();
 
         internal GameFunctions(Plugin plugin) {
             this.Plugin = plugin;
 
-            this._setGlamourPlateSlot = Marshal.GetDelegateForFunctionPointer<SetGlamourPlateSlotDelegate>(this.Plugin.SigScanner.ScanText(Signatures.SetGlamourPlateSlot));
-            this._modifyGlamourPlateSlot = Marshal.GetDelegateForFunctionPointer<ModifyGlamourPlateSlotDelegate>(this.Plugin.SigScanner.ScanText(Signatures.ModifyGlamourPlateSlot));
-            this._clearGlamourPlateSlot = Marshal.GetDelegateForFunctionPointer<ClearGlamourPlateSlotDelegate>(this.Plugin.SigScanner.ScanText(Signatures.ClearGlamourPlateSlot));
-            this._isInArmoire = Marshal.GetDelegateForFunctionPointer<IsInArmoireDelegate>(this.Plugin.SigScanner.ScanText(Signatures.IsInArmoire));
-            this._armoirePtr = this.Plugin.SigScanner.GetStaticAddressFromSig(Signatures.ArmoirePointer);
-            this._tryOn = Marshal.GetDelegateForFunctionPointer<TryOnDelegate>(this.Plugin.SigScanner.ScanText(Signatures.TryOn));
-            this._examineNamePtr = this.Plugin.SigScanner.GetStaticAddressFromSig(Signatures.ExamineNamePointer);
+            SignatureHelper.Initialise(this);
 
             this.Plugin.ChatGui.ChatMessage += this.OnChat;
             this.Plugin.ClientState.Login += OnLogin;
