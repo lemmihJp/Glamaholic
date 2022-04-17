@@ -167,9 +167,9 @@ namespace Glamaholic {
 
                 var plate = new Dictionary<PlateSlot, SavedGlamourItem>();
                 foreach (var slot in (PlateSlot[]) Enum.GetValues(typeof(PlateSlot))) {
-                    // Updated: 6.0
+                    // Updated: 6.1
                     // from SetGlamourPlateSlot
-                    var item = editorInfo + 44 * (int) slot + 7956;
+                    var item = editorInfo + 44 * (int) slot + 10596;
 
                     var itemId = *(uint*) item;
                     var stainId = *(byte*) (item + 24);
