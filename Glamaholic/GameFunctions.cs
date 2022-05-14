@@ -227,7 +227,7 @@ namespace Glamaholic {
                 return;
             }
 
-            // Updated: 6.0
+            // Updated: 6.11 C98BC0
             var editorInfo = *(IntPtr*) ((IntPtr) agent + 0x28);
             if (editorInfo == IntPtr.Zero) {
                 return;
@@ -237,7 +237,8 @@ namespace Glamaholic {
             var current = CurrentPlate;
             var usedStains = new Dictionary<(uint, uint), uint>();
 
-            // Updated: 6.0
+            // Updated: 6.11 C984CF
+            // current plate 6.11 C9AC9F
             var slotPtr = (PlateSlot*) (editorInfo + 0x18);
             var initialSlot = *slotPtr;
             foreach (var (slot, item) in plate.Items) {
