@@ -246,7 +246,7 @@ namespace Glamaholic.Ui {
                         continue;
                     }
 
-                    var stainId = this.GetStainIdFromPart(part);
+                    var stainId = item.IsDyeable ? this.GetStainIdFromPart(part) : (byte) 0;
                     items[slot.Value] = new SavedGlamourItem {
                         ItemId = item.RowId,
                         StainId = stainId,
