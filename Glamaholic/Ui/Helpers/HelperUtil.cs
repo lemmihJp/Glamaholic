@@ -111,7 +111,7 @@ namespace Glamaholic.Ui.Helpers {
             ImGui.PopTextWrapPos();
 
             if (ImGui.IsWindowAppearing()) {
-                ImGui.SetKeyboardFocusHere();
+                ImGui.SetKeyboardFocusHere(-1);
             }
 
             ImGui.Separator();

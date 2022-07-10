@@ -410,7 +410,7 @@ namespace Glamaholic.Ui {
             ImGui.InputText("##dye-filter", ref this._dyeFilter, 512);
 
             if (ImGui.IsWindowAppearing()) {
-                ImGui.SetKeyboardFocusHere();
+                ImGui.SetKeyboardFocusHere(-1);
             }
 
             if (ImGui.BeginChild("dye picker", new Vector2(250, 350), false, ImGuiWindowFlags.HorizontalScrollbar)) {
@@ -453,7 +453,7 @@ namespace Glamaholic.Ui {
             }
 
             if (ImGui.IsWindowAppearing()) {
-                ImGui.SetKeyboardFocusHere();
+                ImGui.SetKeyboardFocusHere(-1);
             }
 
             if (GameFunctions.DresserContents.Count > 0) {
@@ -778,7 +778,7 @@ namespace Glamaholic.Ui {
                 }
 
                 if (this._showRename && !renameWasVisible) {
-                    ImGui.SetKeyboardFocusHere();
+                    ImGui.SetKeyboardFocusHere(-1);
                 }
 
                 if (this._editing) {
