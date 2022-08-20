@@ -1,69 +1,62 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net5.0-windows</TargetFramework>
+        <TargetFramework>net6.0-windows</TargetFramework>
         <Version>1.9.6</Version>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <Nullable>enable</Nullable>
         <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-        <IgnoredLints>
-            D0008
-        </IgnoredLints>
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     </PropertyGroup>
 
     <PropertyGroup>
-        <Dalamud>$(AppData)\XIVLauncher\addon\Hooks\dev</Dalamud>
+        <DalamudLibPath>$(AppData)\XIVLauncher\addon\Hooks\dev</DalamudLibPath>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'">
-        <Dalamud>$(DALAMUD_HOME)</Dalamud>
+        <DalamudLibPath>$(DALAMUD_HOME)</DalamudLibPath>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(IsCI)' == 'true'">
-        <Dalamud>$(HOME)/dalamud</Dalamud>
+        <DalamudLibPath>$(HOME)/dalamud</DalamudLibPath>
     </PropertyGroup>
 
     <ItemGroup>
         <Reference Include="Dalamud">
-            <HintPath>$(Dalamud)\Dalamud.dll</HintPath>
+            <HintPath>$(DalamudLibPath)\Dalamud.dll</HintPath>
             <Private>false</Private>
         </Reference>
         <Reference Include="FFXIVClientStructs">
-            <HintPath>$(Dalamud)\FFXIVClientStructs.dll</HintPath>
+            <HintPath>$(DalamudLibPath)\FFXIVClientStructs.dll</HintPath>
             <Private>false</Private>
         </Reference>
         <Reference Include="ImGui.NET">
-            <HintPath>$(Dalamud)\ImGui.NET.dll</HintPath>
+            <HintPath>$(DalamudLibPath)\ImGui.NET.dll</HintPath>
             <Private>false</Private>
         </Reference>
         <Reference Include="ImGuiScene">
-            <HintPath>$(Dalamud)\ImGuiScene.dll</HintPath>
+            <HintPath>$(DalamudLibPath)\ImGuiScene.dll</HintPath>
             <Private>false</Private>
         </Reference>
         <Reference Include="Lumina">
-            <HintPath>$(Dalamud)\Lumina.dll</HintPath>
+            <HintPath>$(DalamudLibPath)\Lumina.dll</HintPath>
             <Private>false</Private>
         </Reference>
         <Reference Include="Lumina.Excel">
-            <HintPath>$(Dalamud)\Lumina.Excel.dll</HintPath>
+            <HintPath>$(DalamudLibPath)\Lumina.Excel.dll</HintPath>
             <Private>false</Private>
         </Reference>
         <Reference Include="Newtonsoft.Json">
-            <HintPath>$(Dalamud)\Newtonsoft.Json.dll</HintPath>
+            <HintPath>$(DalamudLibPath)\Newtonsoft.Json.dll</HintPath>
             <Private>false</Private>
         </Reference>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="DalamudLinter" Version="1.0.3"/>
-        <PackageReference Include="DalamudPackager" Version="2.1.6"/>
-        <PackageReference Include="Fody" Version="6.6.0" PrivateAssets="all"/>
+        <PackageReference Include="DalamudPackager" Version="2.1.7"/>
+        <PackageReference Include="Fody" Version="6.6.3" PrivateAssets="all"/>
         <PackageReference Include="Resourcer.Fody" Version="1.8.0" PrivateAssets="all"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Content Include="..\icon.png" Link="images/icon.png" CopyToOutputDirectory="PreserveNewest" Visible="false"/>
     </ItemGroup>
 
     <ItemGroup>
