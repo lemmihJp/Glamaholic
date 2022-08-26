@@ -137,7 +137,7 @@ namespace Glamaholic {
                     return _dresserContents ?? list;
                 }
 
-                for (var i = 0; i < 400; i++) {
+                for (var i = 0; i < 800; i++) {
                     var glamItem = *(GlamourItem*) (itemsStart + i * 28);
                     if (glamItem.ItemId == 0) {
                         continue;
