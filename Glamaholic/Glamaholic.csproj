@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0-windows</TargetFramework>
+        <TargetFramework>net7.0-windows</TargetFramework>
         <Version>1.9.9</Version>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <Nullable>enable</Nullable>
@@ -54,8 +54,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="DalamudPackager" Version="2.1.8"/>
-        <PackageReference Include="Fody" Version="6.6.3" PrivateAssets="all"/>
+        <PackageReference Include="DalamudPackager" Version="2.1.10"/>
+        <PackageReference Include="Fody" Version="6.6.4" PrivateAssets="all"/>
         <PackageReference Include="Resourcer.Fody" Version="1.8.0" PrivateAssets="all"/>
     </ItemGroup>
 

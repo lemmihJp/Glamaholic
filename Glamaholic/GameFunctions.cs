@@ -18,7 +18,7 @@ using Lumina.Excel.GeneratedSheets;
 namespace Glamaholic {
     internal class GameFunctions : IDisposable {
         private static class Signatures {
-            internal const string SetGlamourPlateSlot = "E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8B 46 10";
+            internal const string SetGlamourPlateSlot = "E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8B 46 10 8B 1B";
             internal const string ModifyGlamourPlateSlot = "48 89 74 24 ?? 57 48 83 EC 20 80 79 30 00";
             internal const string ClearGlamourPlateSlot = "80 79 30 00 4C 8B C1";
             internal const string IsInArmoire = "E8 ?? ?? ?? ?? 84 C0 74 16 8B CB";
@@ -132,13 +132,14 @@ namespace Glamaholic {
                 var agents = Framework.Instance()->GetUiModule()->GetAgentModule();
                 var dresserAgent = agents->GetAgentByInternalId(AgentId.MiragePrismPrismBox);
 
+                // these offsets in 6.3-HF1: AD2BEB
                 var itemsStart = *(IntPtr*) ((IntPtr) dresserAgent + 0x28);
                 if (itemsStart == IntPtr.Zero) {
                     return _dresserContents ?? list;
                 }
 
                 for (var i = 0; i < 800; i++) {
-                    var glamItem = *(GlamourItem*) (itemsStart + i * 28);
+                    var glamItem = *(GlamourItem*) (itemsStart + i * 136);
                     if (glamItem.ItemId == 0) {
                         continue;
                     }
@@ -433,15 +434,15 @@ namespace Glamaholic {
         }
     }
 
-    [StructLayout(LayoutKind.Explicit, Size = 28)]
+    [StructLayout(LayoutKind.Explicit, Size = 136)]
     internal readonly struct GlamourItem {
-        [FieldOffset(4)]
+        [FieldOffset(0x70)]
         internal readonly uint Index;
 
-        [FieldOffset(8)]
+        [FieldOffset(0x74)]
         internal readonly uint ItemId;
 
-        [FieldOffset(26)]
+        [FieldOffset(0x86)]
         internal readonly byte StainId;
     }
 

@@ -96,7 +96,7 @@ namespace Glamaholic {
             void SetTryOnSave(bool save) {
                 var tryOnAgent = (IntPtr) Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.Tryon);
                 if (tryOnAgent != IntPtr.Zero) {
-                    *(byte*) (tryOnAgent + 0x2E2) = (byte) (save ? 1 : 0);
+                    *(byte*) (tryOnAgent + 0x30A) = (byte) (save ? 1 : 0);
                 }
             }
 
