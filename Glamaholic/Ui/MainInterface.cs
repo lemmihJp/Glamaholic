@@ -185,7 +185,7 @@ namespace Glamaholic.Ui {
                 ImGui.PushStyleColor(ImGuiCol.Text, 0xFFFFFFFF);
                 ImGui.PushStyleColor(ImGuiCol.HeaderHovered, 0x00000000);
                 if (ImGui.MenuItem(kofiText)) {
-                    Process.Start(new ProcessStartInfo("https://ko-fi.com/ascclemens") {
+                    Process.Start(new ProcessStartInfo("https://ko-fi.com/lojewalo") {
                         UseShellExecute = true,
                     });
                 }
