@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
-using Dalamud.Interface;
-using Dalamud.Logging;
+using Dalamud.Interface.Utility;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 
@@ -45,7 +44,7 @@ namespace Glamaholic.Ui.Helpers {
 
         internal static float DropdownWidth() {
             // arrow size is GetFrameHeight
-            return (ImGui.CalcTextSize(Plugin.PluginName).X + ImGui.GetStyle().ItemInnerSpacing.X * 2 + ImGui.GetFrameHeight()) * ImGuiHelpers.GlobalScale;
+            return (ImGui.CalcTextSize(Plugin.Name).X + ImGui.GetStyle().ItemInnerSpacing.X * 2 + ImGui.GetFrameHeight()) * ImGuiHelpers.GlobalScale;
         }
 
         internal class HelperStyles : IDisposable {
@@ -76,11 +75,11 @@ namespace Glamaholic.Ui.Helpers {
             }
 
             ImGui.SetNextItemWidth(DropdownWidth());
-            if (ImGui.BeginCombo($"##{id}-combo", Plugin.PluginName)) {
+            if (ImGui.BeginCombo($"##{id}-combo", Plugin.Name)) {
                 try {
                     dropdown();
                 } catch (Exception ex) {
-                    PluginLog.LogError(ex, "Error drawing helper combo");
+                    Plugin.Log.Error(ex, "Error drawing helper combo");
                 }
 
                 ImGui.EndCombo();

@@ -1,6 +1,6 @@
 ﻿using System;
-using Dalamud.Game.Gui;
 using Dalamud.Interface;
+using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
@@ -17,12 +17,12 @@ namespace Glamaholic {
             return addon != null && addon->IsVisible;
         }
 
-        private static unsafe bool IsOpen(GameGui gui, string name) {
+        private static unsafe bool IsOpen(IGameGui gui, string name) {
             var addon = (AtkUnitBase*) gui.GetAddonByName(name, 1);
             return IsOpen(addon);
         }
 
-        internal static bool IsEditingPlate(GameGui gui) {
+        internal static bool IsEditingPlate(IGameGui gui) {
             var plateOpen = IsOpen(gui, PlateAddon);
             var boxOpen = IsOpen(gui, BoxAddon);
             var armoireOpen = IsOpen(gui, ArmoireAddon);

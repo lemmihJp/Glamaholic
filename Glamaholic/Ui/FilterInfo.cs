@@ -2,12 +2,12 @@
 using System.Linq;
 using System.Reflection;
 using Dalamud;
-using Dalamud.Data;
+using Dalamud.Plugin.Services;
 using Lumina.Excel.GeneratedSheets;
 
 namespace Glamaholic.Ui {
     internal class FilterInfo {
-        private DataManager Data { get; }
+        private IDataManager Data { get; }
 
         private uint MaxLevel { get; }
         private string Query { get; }
@@ -17,7 +17,7 @@ namespace Glamaholic.Ui {
         private HashSet<uint> ItemIds { get; } = new();
         private HashSet<string> ItemNames { get; } = new();
 
-        internal FilterInfo(DataManager data, string filter) {
+        internal FilterInfo(IDataManager data, string filter) {
             this.Data = data;
 
             var queryWords = new List<string>();

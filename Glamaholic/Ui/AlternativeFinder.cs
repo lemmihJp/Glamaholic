@@ -134,7 +134,7 @@ namespace Glamaholic.Ui {
 
             var payload = new SeString(payloadList);
 
-            this.Ui.Plugin.ChatGui.PrintChat(new XivChatEntry {
+            this.Ui.Plugin.ChatGui.Print(new XivChatEntry {
                 Message = payload,
             });
         }

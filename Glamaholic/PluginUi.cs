@@ -1,17 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Dalamud.Interface.Internal;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Glamaholic.Ui;
 using Glamaholic.Ui.Helpers;
-using ImGuiScene;
 
 namespace Glamaholic {
     internal class PluginUi : IDisposable {
         internal Plugin Plugin { get; }
 
-        private Dictionary<ushort, TextureWrap> Icons { get; } = new();
+        private Dictionary<ushort, IDalamudTextureWrap> Icons { get; } = new();
 
         private MainInterface MainInterface { get; }
         private EditorHelper EditorHelper { get; }
@@ -62,12 +62,12 @@ namespace Glamaholic {
             this.MainInterface.Toggle();
         }
 
-        internal TextureWrap? GetIcon(ushort id) {
+        internal IDalamudTextureWrap? GetIcon(ushort id) {
             if (this.Icons.TryGetValue(id, out var cached)) {
                 return cached;
             }
 
-            var icon = this.Plugin.DataManager.GetImGuiTextureIcon(id);
+            var icon = this.Plugin.TextureProvider.GetIcon(id);
             if (icon == null) {
                 return null;
             }

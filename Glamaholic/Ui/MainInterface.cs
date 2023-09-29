@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Dalamud;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
-using Dalamud.Logging;
+using Dalamud.Interface.Utility;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using Newtonsoft.Json;
@@ -91,7 +91,7 @@ namespace Glamaholic.Ui {
 
             ImGui.SetNextWindowSize(new Vector2(415, 650), ImGuiCond.FirstUseEver);
 
-            if (!ImGui.Begin(this.Ui.Plugin.Name, ref this._visible, ImGuiWindowFlags.MenuBar)) {
+            if (!ImGui.Begin(Plugin.Name, ref this._visible, ImGuiWindowFlags.MenuBar)) {
                 ImGui.End();
                 return;
             }
@@ -132,7 +132,7 @@ namespace Glamaholic.Ui {
                                 this.Ui.SwitchPlate(this.Ui.Plugin.Config.Plates.Count - 1);
                             }
                         } catch (Exception ex) {
-                            PluginLog.LogWarning(ex, "Failed to import glamour plate");
+                            Plugin.Log.Warning(ex, "Failed to import glamour plate");
                         }
                     }
 

@@ -34,7 +34,7 @@ namespace Glamaholic.Ui.Helpers {
         }
 
         private void DrawDropdown() {
-            if (ImGui.Selectable($"Open {this.Ui.Plugin.Name}")) {
+            if (ImGui.Selectable($"Open {Plugin.Name}")) {
                 this.Ui.OpenMainInterface();
             }
 

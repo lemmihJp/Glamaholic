@@ -8,6 +8,7 @@ using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Memory;
+using Dalamud.Plugin.Services;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
@@ -72,8 +73,7 @@ namespace Glamaholic {
 
         internal GameFunctions(Plugin plugin) {
             this.Plugin = plugin;
-
-            SignatureHelper.Initialise(this);
+            this.Plugin.GameInteropProvider.InitializeFromAttributes(this);
 
             this.Plugin.ChatGui.ChatMessage += this.OnChat;
             this.Plugin.ClientState.Login += OnLogin;
@@ -96,13 +96,13 @@ namespace Glamaholic {
             }
         }
 
-        private static void OnLogin(object? sender, EventArgs e) {
+        private static void OnLogin() {
             _dresserContents = null;
         }
 
         private bool _wasEditing;
 
-        private void OnFrameworkUpdate(Dalamud.Game.Framework framework) {
+        private void OnFrameworkUpdate(IFramework framework1) {
             var editing = Util.IsEditingPlate(this.Plugin.GameGui);
             if (!this._wasEditing && editing) {
                 // cache dresser

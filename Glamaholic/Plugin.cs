@@ -1,40 +1,45 @@
-﻿using Dalamud.Data;
-using Dalamud.Game;
-using Dalamud.Game.ClientState;
-using Dalamud.Game.Command;
-using Dalamud.Game.Gui;
+﻿using Dalamud.Game;
 using Dalamud.IoC;
 using Dalamud.Plugin;
+using Dalamud.Plugin.Services;
 
 namespace Glamaholic {
     // ReSharper disable once ClassNeverInstantiated.Global
     public class Plugin : IDalamudPlugin {
-        internal const string PluginName = "Glamaholic";
-        public string Name => PluginName;
+        internal static string Name => "Glamaholic";
+
+        [PluginService]
+        internal static IPluginLog Log { get; private set; }
 
         [PluginService]
         internal DalamudPluginInterface Interface { get; init; }
 
         [PluginService]
-        internal ChatGui ChatGui { get; init; }
+        internal IChatGui ChatGui { get; init; }
 
         [PluginService]
-        internal ClientState ClientState { get; init; }
+        internal IClientState ClientState { get; init; }
 
         [PluginService]
-        internal CommandManager CommandManager { get; init; }
+        internal ICommandManager CommandManager { get; init; }
 
         [PluginService]
-        internal DataManager DataManager { get; init; }
+        internal IDataManager DataManager { get; init; }
 
         [PluginService]
-        internal Framework Framework { get; init; }
+        internal IFramework Framework { get; init; }
 
         [PluginService]
-        internal GameGui GameGui { get; init; }
+        internal IGameGui GameGui { get; init; }
 
         [PluginService]
-        internal SigScanner SigScanner { get; init; }
+        internal ISigScanner SigScanner { get; init; }
+
+        [PluginService]
+        internal ITextureProvider TextureProvider { get; init; }
+
+        [PluginService]
+        internal IGameInteropProvider GameInteropProvider { get; init; }
 
         internal Configuration Config { get; }
         internal GameFunctions Functions { get; }
