@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>net7.0-windows</TargetFramework>
-        <Version>1.9.13</Version>
+        <Version>1.9.14</Version>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <Nullable>enable</Nullable>
         <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
@@ -50,13 +50,13 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="DalamudPackager" Version="2.1.10"/>
-        <PackageReference Include="Fody" Version="6.6.4" PrivateAssets="all"/>
-        <PackageReference Include="Resourcer.Fody" Version="1.8.0" PrivateAssets="all"/>
+        <PackageReference Include="DalamudPackager" Version="2.1.12" />
+        <PackageReference Include="Fody" Version="6.8.0" PrivateAssets="all" />
+        <PackageReference Include="Resourcer.Fody" Version="1.8.1" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Include="help.txt"/>
+        <EmbeddedResource Include="help.txt" />
     </ItemGroup>
 
 </Project>
