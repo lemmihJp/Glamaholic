@@ -22,6 +22,7 @@ namespace Glamaholic {
             internal const string SetGlamourPlateSlot = "E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8B 46 10 8B 1B";
             internal const string ModifyGlamourPlateSlot = "48 89 74 24 ?? 57 48 83 EC 20 80 79 30 00 49 8B F9";
 
+            // 40 53 55 56 57 41 54 41 56 41 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 44 8B BC 24
             // __int64 __fastcall sub_140CC8B10(__int64 a1, __int64 a2, __int64 a3, int a4, int a5)
             // call with same a1, but make sure *(a1+40) > 0
             // a2 should be at least 8 bytes long, just trash, can stackalloc
@@ -31,21 +32,19 @@ namespace Glamaholic {
             internal const string ClearGlamourPlateSlot = "80 79 30 00 4C 8B C1";
 
             internal const string ArmoirePointer = "48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 84 C0 74 98 44 0F B7";
-            internal const string TryOn = "E8 ?? ?? ?? ?? EB 35 BA";
+            internal const string TryOn = "E8 ?? ?? ?? ?? C6 43 08 01 EB 32";
             internal const string ExamineNamePointer = "48 8D 05 ?? ?? ?? ?? 48 89 85 ?? ?? ?? ?? 74 56 49 8B 4D";
         }
 
         #region Delegates
 
-        private delegate void SetGlamourPlateSlotDelegate(IntPtr agent, MirageSource mirageSource, int glamId, uint itemId, byte stainId);
+        private delegate void SetGlamourPlateSlotDelegate(IntPtr agent, MirageSource mirageSource, int glamId, uint itemId, byte stainId, byte stainId2);
 
         private delegate void ModifyGlamourPlateSlotDelegate(IntPtr agent, PlateSlot slot, byte stainId, IntPtr numbers, int stainItemId, int stainItemId2);
 
         private delegate void ClearGlamourPlateSlotDelegate(IntPtr agent, PlateSlot slot);
 
-        private delegate byte IsInArmoireDelegate(IntPtr armoire, int index);
-
-        private delegate byte TryOnDelegate(uint unknownCanEquip, uint itemBaseId, ulong stainColor, uint itemGlamourId, byte unknownByte);
+        private delegate byte TryOnDelegate(uint unknownCanEquip, uint itemBaseId, ulong stainColor, ulong stainColor2, uint itemGlamourId, byte unknownByte);
 
         #endregion
 
@@ -199,8 +198,8 @@ namespace Glamaholic {
 
         private static unsafe AgentInterface* EditorAgent => Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.MiragePrismMiragePlate);
 
-        internal unsafe void SetGlamourPlateSlot(MirageSource source, int glamId, uint itemId, byte stainId) {
-            this._setGlamourPlateSlot((IntPtr) EditorAgent, source, glamId, itemId, stainId);
+        internal unsafe void SetGlamourPlateSlot(MirageSource source, int glamId, uint itemId, byte stainId, byte stainId2) {
+            this._setGlamourPlateSlot((IntPtr) EditorAgent, source, glamId, itemId, stainId, stainId2);
         }
 
         internal unsafe void ModifyGlamourPlateSlot(PlateSlot slot, byte stainId, IntPtr numbers, int stainItemId, int stainItemId2) {
@@ -280,7 +279,7 @@ namespace Glamaholic {
                     }
 
                     var mirage = matchingIds[idx];
-                    info = ((int) mirage.Index, mirage.ItemId, mirage.StainId);
+                    info = ((int) mirage.Index, mirage.ItemId, mirage.StainId, mirage.StainId2);
                 }
 
                 if (info.Item1 == 0) {
@@ -292,7 +291,8 @@ namespace Glamaholic {
                     source,
                     info.Item1,
                     info.Item2,
-                    info.Item3
+                    info.Item3,
+                    info.Item4
                 );
 
                 if (item.StainId != info.Item3) {
@@ -392,12 +392,12 @@ namespace Glamaholic {
             }
         }
 
-        internal void TryOn(uint itemId, byte stainId, bool suppress = true) {
+        internal void TryOn(uint itemId, byte stainId, byte stainId2, bool suppress = true) {
             if (suppress) {
                 this._filterIds.Add(itemId);
             }
 
-            this._tryOn(0xFF, itemId % Util.HqItemOffset, stainId, 0, 0);
+            this._tryOn(0xFF, itemId % Util.HqItemOffset, stainId, stainId2, 0, 0);
         }
     }
 
