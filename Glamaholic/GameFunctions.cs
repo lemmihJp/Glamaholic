@@ -20,19 +20,18 @@ namespace Glamaholic {
     internal class GameFunctions : IDisposable {
         private static class Signatures {
             internal const string SetGlamourPlateSlot = "E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8B 46 10 8B 1B";
-            internal const string ModifyGlamourPlateSlot = "48 89 74 24 ?? 57 48 83 EC 20 80 79 30 00";
+            internal const string ModifyGlamourPlateSlot = "48 89 74 24 ?? 57 48 83 EC 20 80 79 30 00 49 8B F9";
             internal const string ClearGlamourPlateSlot = "80 79 30 00 4C 8B C1";
-            internal const string IsInArmoire = "E8 ?? ?? ?? ?? 84 C0 74 16 8B CB";
-            internal const string ArmoirePointer = "48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 84 C0 74 16 8B CB E8";
+            internal const string ArmoirePointer = "48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 84 C0 74 98 44 0F B7";
             internal const string TryOn = "E8 ?? ?? ?? ?? EB 35 BA";
-            internal const string ExamineNamePointer = "48 8D 05 ?? ?? ?? ?? 48 89 85 ?? ?? ?? ?? 74 56 49 8B 4F";
+            internal const string ExamineNamePointer = "48 8D 05 ?? ?? ?? ?? 48 89 85 ?? ?? ?? ?? 74 56 49 8B 4D";
         }
 
         #region Delegates
 
         private delegate void SetGlamourPlateSlotDelegate(IntPtr agent, MirageSource mirageSource, int glamId, uint itemId, byte stainId);
 
-        private delegate void ModifyGlamourPlateSlotDelegate(IntPtr agent, PlateSlot slot, byte stainId, IntPtr numbers, int stainItemId);
+        private delegate void ModifyGlamourPlateSlotDelegate(IntPtr agent, PlateSlot slot, byte stainId, IntPtr numbers, int stainItemId, int stainItemId2);
 
         private delegate void ClearGlamourPlateSlotDelegate(IntPtr agent, PlateSlot slot);
 
@@ -54,9 +53,6 @@ namespace Glamaholic {
 
         [Signature(Signatures.ClearGlamourPlateSlot)]
         private readonly ClearGlamourPlateSlotDelegate _clearGlamourPlateSlot = null!;
-
-        [Signature(Signatures.IsInArmoire)]
-        private readonly IsInArmoireDelegate _isInArmoire = null!;
 
         [Signature(Signatures.ArmoirePointer, ScanType = ScanType.StaticAddress)]
         private readonly IntPtr _armoirePtr;
@@ -112,7 +108,9 @@ namespace Glamaholic {
             this._wasEditing = editing;
         }
 
-        internal unsafe bool ArmoireLoaded => *(byte*) this._armoirePtr > 0;
+        internal unsafe bool ArmoireLoaded => this.Armoire->IsCabinetLoaded();
+
+        internal unsafe FFXIVClientStructs.FFXIV.Client.Game.UI.Cabinet* Armoire => (FFXIVClientStructs.FFXIV.Client.Game.UI.Cabinet*) this._armoirePtr;
 
         internal string? ExamineName => this._examineNamePtr == IntPtr.Zero
             ? null
@@ -197,26 +195,26 @@ namespace Glamaholic {
             this._setGlamourPlateSlot((IntPtr) EditorAgent, source, glamId, itemId, stainId);
         }
 
-        internal unsafe void ModifyGlamourPlateSlot(PlateSlot slot, byte stainId, IntPtr numbers, int stainItemId) {
-            this._modifyGlamourPlateSlot((IntPtr) EditorAgent, slot, stainId, numbers, stainItemId);
+        internal unsafe void ModifyGlamourPlateSlot(PlateSlot slot, byte stainId, IntPtr numbers, int stainItemId, int stainItemId2) {
+            this._modifyGlamourPlateSlot((IntPtr) EditorAgent, slot, stainId, numbers, stainItemId, stainItemId2);
         }
 
-        internal bool IsInArmoire(uint itemId) {
+        internal unsafe bool IsInArmoire(uint itemId) {
             var row = this.Plugin.DataManager.GetExcelSheet<Cabinet>()!.FirstOrDefault(row => row.Item.Row == itemId);
             if (row == null) {
                 return false;
             }
 
-            return this._isInArmoire(this._armoirePtr, (int) row.RowId) != 0;
+            return this.Armoire->IsItemInCabinet((int) row.RowId);
         }
 
-        internal uint? ArmoireIndexIfPresent(uint itemId) {
+        internal unsafe uint? ArmoireIndexIfPresent(uint itemId) {
             var row = this.Plugin.DataManager.GetExcelSheet<Cabinet>()!.FirstOrDefault(row => row.Item.Row == itemId);
             if (row == null) {
                 return null;
             }
 
-            var isInArmoire = this._isInArmoire(this._armoirePtr, (int) row.RowId) != 0;
+            var isInArmoire = this.Armoire->IsItemInCabinet((int) row.RowId);
             return isInArmoire
                 ? row.RowId
                 : null;
@@ -377,7 +375,8 @@ namespace Glamaholic {
                 slot,
                 item.StainId,
                 mem,
-                dyeInfo.Item1
+                dyeInfo.Item1,
+                0
             );
 
             if (mem != IntPtr.Zero) {
