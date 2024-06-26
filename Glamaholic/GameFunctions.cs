@@ -21,7 +21,15 @@ namespace Glamaholic {
         private static class Signatures {
             internal const string SetGlamourPlateSlot = "E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8B 46 10 8B 1B";
             internal const string ModifyGlamourPlateSlot = "48 89 74 24 ?? 57 48 83 EC 20 80 79 30 00 49 8B F9";
+
+            // __int64 __fastcall sub_140CC8B10(__int64 a1, __int64 a2, __int64 a3, int a4, int a5)
+            // call with same a1, but make sure *(a1+40) > 0
+            // a2 should be at least 8 bytes long, just trash, can stackalloc
+            // a3 = 0
+            // a4 = 0
+            // a5 = 1
             internal const string ClearGlamourPlateSlot = "80 79 30 00 4C 8B C1";
+
             internal const string ArmoirePointer = "48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 84 C0 74 98 44 0F B7";
             internal const string TryOn = "E8 ?? ?? ?? ?? EB 35 BA";
             internal const string ExamineNamePointer = "48 8D 05 ?? ?? ?? ?? 48 89 85 ?? ?? ?? ?? 74 56 49 8B 4D";
