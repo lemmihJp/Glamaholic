@@ -1,5 +1,5 @@
-﻿using System;
-using Dalamud.Game.Command;
+﻿using Dalamud.Game.Command;
+using System;
 
 namespace Glamaholic {
     internal class Commands : IDisposable {

@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Dalamud.Interface.Internal;
-using FFXIVClientStructs.FFXIV.Client.System.Framework;
+﻿using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Glamaholic.Ui;
 using Glamaholic.Ui.Helpers;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Glamaholic {
     internal class PluginUi : IDisposable {

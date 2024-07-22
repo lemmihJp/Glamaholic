@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
-using FFXIVClientStructs.FFXIV.Client.Game;
+﻿using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
+using System.Collections.Generic;
 
 namespace Glamaholic.Ui.Helpers {
     internal class ExamineHelper {

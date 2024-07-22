@@ -46,7 +46,7 @@ namespace Glamaholic {
         internal PluginUi Ui { get; }
         private Commands Commands { get; }
 
-        #pragma warning disable 8618
+#pragma warning disable 8618
         public Plugin() {
             this.Config = this.Interface!.GetPluginConfig() as Configuration ?? new Configuration();
 
@@ -54,7 +54,7 @@ namespace Glamaholic {
             this.Ui = new PluginUi(this);
             this.Commands = new Commands(this);
         }
-        #pragma warning restore 8618
+#pragma warning restore 8618
 
         public void Dispose() {
             this.Commands.Dispose();

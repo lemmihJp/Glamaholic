@@ -1,4 +1,10 @@
-﻿using System;
+﻿using Dalamud.Interface;
+using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility;
+using ImGuiNET;
+using Lumina.Excel.GeneratedSheets;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -6,13 +12,6 @@ using System.Net;
 using System.Net.Http;
 using System.Numerics;
 using System.Threading.Tasks;
-using Dalamud;
-using Dalamud.Interface;
-using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility;
-using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
-using Newtonsoft.Json;
 
 namespace Glamaholic.Ui {
     internal class MainInterface {

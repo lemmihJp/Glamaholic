@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Dalamud.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Dalamud.Configuration;
 
 namespace Glamaholic {
     [Serializable]

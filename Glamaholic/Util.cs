@@ -1,9 +1,9 @@
-﻿using System;
-using Dalamud.Interface;
+﻿using Dalamud.Interface;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
+using System;
 
 namespace Glamaholic {
     internal static class Util {

@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Numerics;
-using Dalamud.Interface.Utility;
+﻿using Dalamud.Interface.Utility;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
+using System;
+using System.Collections.Generic;
+using System.Numerics;
 
 namespace Glamaholic.Ui.Helpers {
     internal static class HelperUtil {

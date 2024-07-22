@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Numerics;
-using Dalamud.Game.Text;
+﻿using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Interface;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
+using System;
+using System.Collections.Generic;
+using System.Numerics;
 
 namespace Glamaholic.Ui {
     internal class AlternativeFinder {
