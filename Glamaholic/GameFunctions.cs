@@ -1,6 +1,7 @@
 ﻿using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
+using Dalamud.Plugin.Services;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
@@ -65,18 +66,21 @@ namespace Glamaholic {
         #endregion
 
         private Plugin Plugin { get; }
-
         private readonly List<uint> _filterIds = new();
+        private static List<PrismBoxCachedItem> _cachedDresserItems = [];
+        private static int _dresserItemSlotsUsed = 0;
 
         internal GameFunctions(Plugin plugin) {
             this.Plugin = plugin;
             this.Plugin.GameInteropProvider.InitializeFromAttributes(this);
 
             this.Plugin.ChatGui.ChatMessage += this.OnChat;
+            this.Plugin.Framework.Update += OnFrameworkUpdate;
         }
 
         public void Dispose() {
             this.Plugin.ChatGui.ChatMessage -= this.OnChat;
+            this.Plugin.Framework.Update -= OnFrameworkUpdate;
         }
 
         private void OnChat(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled) {
@@ -89,6 +93,35 @@ namespace Glamaholic {
             }
         }
 
+        private unsafe void OnFrameworkUpdate(IFramework framework) {
+            var agent = AgentMiragePrismPrismBox.Instance();
+            if (agent == null)
+                return;
+
+            if (!agent->IsAddonReady() || agent->Data == null)
+                return;
+
+            if (agent->Data->UsedSlots == _dresserItemSlotsUsed)
+                return;
+
+            _cachedDresserItems.Clear();
+            foreach (var item in agent->Data->PrismBoxItems) {
+                if (item.ItemId == 0 || item.Slot >= 800)
+                    continue;
+
+                _cachedDresserItems.Add(new PrismBoxCachedItem {
+                    Name = item.Name.ToString(),
+                    Slot = item.Slot,
+                    ItemId = item.ItemId,
+                    IconId = item.IconId,
+                    Stain1 = item.Stains[0],
+                    Stain2 = item.Stains[1],
+                });
+            }
+
+            _dresserItemSlotsUsed = agent->Data->UsedSlots;
+        }
+
         private static unsafe AgentMiragePrismMiragePlate* MiragePlateAgent => AgentMiragePrismMiragePlate.Instance();
 
         internal unsafe Cabinet* Armoire => &UIState.Instance()->Cabinet;
@@ -97,15 +130,8 @@ namespace Glamaholic {
 
         internal unsafe string? ExamineName => UIState.Instance()->Inspect.NameString;
 
-        internal static unsafe List<PrismBoxItem> DresserContents {
-            get {
-                var agent = AgentMiragePrismPrismBox.Instance();
-                if (agent == null || agent->Data == null)
-                    return [];
-
-                // TODO check the perform implications of this
-                return new List<PrismBoxItem>(agent->Data->PrismBoxItems.ToArray());
-            }
+        internal static unsafe List<PrismBoxCachedItem> DresserContents {
+            get => _cachedDresserItems;
         }
 
         internal static unsafe Dictionary<PlateSlot, SavedGlamourItem>? CurrentPlate {
@@ -230,14 +256,14 @@ namespace Glamaholic {
                 } else {
                     // try to find an item with matching stains
                     var idx = matchingIds.FindIndex(mirage =>
-                        mirage.Stains[0] == item.Stain1
-                        && mirage.Stains[1] == item.Stain2);
+                        mirage.Stain1 == item.Stain1
+                        && mirage.Stain2 == item.Stain2);
 
                     if (idx == -1)
                         idx = 0;
 
                     var mirage = matchingIds[idx];
-                    info = ((int) mirage.Slot, mirage.ItemId, mirage.Stains[0], mirage.Stains[1]);
+                    info = ((int) mirage.Slot, mirage.ItemId, mirage.Stain1, mirage.Stain2);
                 }
 
                 if (info.Item1 == 0) {
@@ -351,6 +377,15 @@ namespace Glamaholic {
             }
 
             AgentTryon.TryOn(0, itemId % Util.HqItemOffset, stainId, stainId2);
+        }
+
+        internal struct PrismBoxCachedItem {
+            public string Name { get; set; }
+            public uint Slot { get; set; }
+            public uint ItemId { get; set; }
+            public uint IconId { get; set; }
+            public byte Stain1 { get; set; }
+            public byte Stain2 { get; set; }
         }
     }
 }

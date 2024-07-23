@@ -41,6 +41,9 @@ namespace Glamaholic {
         [PluginService]
         internal IGameInteropProvider GameInteropProvider { get; init; }
 
+        [PluginService]
+        internal IAddonLifecycle AddonLifecycle { get; init; }
+
         internal Configuration Config { get; }
         internal GameFunctions Functions { get; }
         internal PluginUi Ui { get; }
