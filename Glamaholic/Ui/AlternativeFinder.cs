@@ -23,7 +23,7 @@ namespace Glamaholic.Ui {
 
             var info = ModelInfo(item.ModelMain);
 
-            foreach (var row in this.Ui.Plugin.DataManager.GetExcelSheet<Item>()!) {
+            foreach (var row in Plugin.DataManager.GetExcelSheet<Item>()!) {
                 if (Util.IsItemSkipped(row) || row.EquipSlotCategory.Row != this.Item.EquipSlotCategory.Row || info != ModelInfo(row.ModelMain)) {
                     continue;
                 }
@@ -134,7 +134,7 @@ namespace Glamaholic.Ui {
 
             var payload = new SeString(payloadList);
 
-            this.Ui.Plugin.ChatGui.Print(new XivChatEntry {
+            Plugin.ChatGui.Print(new XivChatEntry {
                 Message = payload,
             });
         }

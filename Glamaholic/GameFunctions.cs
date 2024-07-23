@@ -74,12 +74,12 @@ namespace Glamaholic {
             this.Plugin = plugin;
             this.Plugin.GameInteropProvider.InitializeFromAttributes(this);
 
-            this.Plugin.ChatGui.ChatMessage += this.OnChat;
+            Plugin.ChatGui.ChatMessage += this.OnChat;
             this.Plugin.Framework.Update += OnFrameworkUpdate;
         }
 
         public void Dispose() {
-            this.Plugin.ChatGui.ChatMessage -= this.OnChat;
+            Plugin.ChatGui.ChatMessage -= this.OnChat;
             this.Plugin.Framework.Update -= OnFrameworkUpdate;
         }
 
@@ -182,7 +182,7 @@ namespace Glamaholic {
         }
 
         internal unsafe bool IsInArmoire(uint itemId) {
-            var row = this.Plugin.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Cabinet>()!.FirstOrDefault(row => row.Item.Row == itemId);
+            var row = Plugin.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Cabinet>()!.FirstOrDefault(row => row.Item.Row == itemId);
             if (row == null) {
                 return false;
             }
@@ -191,7 +191,7 @@ namespace Glamaholic {
         }
 
         internal unsafe uint? ArmoireIndexIfPresent(uint itemId) {
-            var row = this.Plugin.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Cabinet>()!.FirstOrDefault(row => row.Item.Row == itemId);
+            var row = Plugin.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Cabinet>()!.FirstOrDefault(row => row.Item.Row == itemId);
             if (row == null) {
                 return null;
             }
@@ -298,7 +298,7 @@ namespace Glamaholic {
 
         private unsafe uint SelectStainItemId(byte stainId, Dictionary<(uint, uint), uint> usedStains) {
             var inventory = InventoryManager.Instance();
-            var transient = this.Plugin.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.StainTransient>()!.GetRow(stainId);
+            var transient = Plugin.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.StainTransient>()!.GetRow(stainId);
 
             uint itemId = 0;
 

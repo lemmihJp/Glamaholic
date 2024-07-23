@@ -15,7 +15,7 @@ namespace Glamaholic {
         internal IDalamudPluginInterface Interface { get; init; }
 
         [PluginService]
-        internal IChatGui ChatGui { get; init; }
+        internal static IChatGui ChatGui { get; private set; }
 
         [PluginService]
         internal IClientState ClientState { get; init; }
@@ -24,7 +24,7 @@ namespace Glamaholic {
         internal ICommandManager CommandManager { get; init; }
 
         [PluginService]
-        internal IDataManager DataManager { get; init; }
+        internal static IDataManager DataManager { get; private set; }
 
         [PluginService]
         internal IFramework Framework { get; init; }
