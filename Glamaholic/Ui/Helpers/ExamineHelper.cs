@@ -54,22 +54,21 @@ namespace Glamaholic.Ui.Helpers {
             var items = new Dictionary<PlateSlot, SavedGlamourItem>();
             for (var i = 0; i < inventory->Size && i < (int) (PlateSlot.LeftRing + 2); i++) {
                 var item = inventory->Items[i];
-                var itemId = item.GlamourID;
+                var itemId = item.GlamourId;
                 if (itemId == 0) {
-                    itemId = item.ItemID;
+                    itemId = item.ItemId;
                 }
 
                 if (itemId == 0) {
                     continue;
                 }
 
-                var stainId = item.Stain;
-
                 // for some reason, this still accounts for belts in EW
                 var slot = i > 5 ? i - 1 : i;
                 items[(PlateSlot) slot] = new SavedGlamourItem {
                     ItemId = itemId,
-                    StainId = stainId,
+                    Stain1 = item.Stains[0],
+                    Stain2 = item.Stains[1]
                 };
             }
 

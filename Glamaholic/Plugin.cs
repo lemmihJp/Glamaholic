@@ -12,7 +12,7 @@ namespace Glamaholic {
         internal static IPluginLog Log { get; private set; }
 
         [PluginService]
-        internal DalamudPluginInterface Interface { get; init; }
+        internal IDalamudPluginInterface Interface { get; init; }
 
         [PluginService]
         internal IChatGui ChatGui { get; init; }

@@ -1,8 +1,6 @@
-﻿using FFXIVClientStructs.FFXIV.Client.System.Framework;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+﻿using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -48,8 +46,8 @@ namespace Glamaholic.Ui.Helpers {
         }
 
         private static unsafe Dictionary<PlateSlot, SavedGlamourItem> GetTryOnItems() {
-            var agent = (IntPtr) Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.Tryon);
-            var firstItem = agent + 0x314;
+            var agent = AgentTryon.Instance();
+            var firstItem = (nint) agent + 0x368;
 
             var items = new Dictionary<PlateSlot, SavedGlamourItem>();
 
@@ -59,20 +57,27 @@ namespace Glamaholic.Ui.Helpers {
                     continue;
                 }
 
+                int slot = item->Slot > 5 ? item->Slot - 1 : item->Slot;
+
                 var itemId = item->ItemId;
                 if (item->GlamourId != 0) {
                     itemId = item->GlamourId;
                 }
 
-                var stainId = item->StainPreviewId == 0
-                    ? item->StainId
-                    : item->StainPreviewId;
+                var stain1 = item->StainPreview1 == 0
+                    ? item->Stain1
+                    : item->StainPreview1;
+
+                var stain2 = item->StainPreview2 == 0
+                    ? item->Stain2
+                    : item->StainPreview2;
 
                 // for some reason, this still accounts for belts in EW
-                var slot = item->Slot > 5 ? item->Slot - 1 : item->Slot;
+
                 items[(PlateSlot) slot] = new SavedGlamourItem {
                     ItemId = itemId % Util.HqItemOffset,
-                    StainId = stainId,
+                    Stain1 = stain1,
+                    Stain2 = stain2,
                 };
             }
 
@@ -85,13 +90,16 @@ namespace Glamaholic.Ui.Helpers {
             internal readonly byte Slot;
 
             [FieldOffset(2)]
-            internal readonly byte StainId;
+            internal readonly byte Stain1;
 
             [FieldOffset(3)]
-            internal readonly byte StainPreviewId;
+            internal readonly byte Stain2;
+
+            [FieldOffset(4)]
+            internal readonly byte StainPreview1;
 
             [FieldOffset(5)]
-            internal readonly byte UnknownByte;
+            internal readonly byte StainPreview2;
 
             [FieldOffset(12)]
             internal readonly uint ItemId;

@@ -1,4 +1,5 @@
-﻿using Dalamud.Interface;
+﻿using Dalamud.Game;
+using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using ImGuiNET;
@@ -57,6 +58,7 @@ namespace Glamaholic.Ui {
         private volatile bool _ecImporting;
         private readonly Dictionary<string, Stopwatch> _timedMessages = new();
         private string _tagInput = string.Empty;
+        private int _editingItemDyeCount = 0;
 
         internal MainInterface(PluginUi ui) {
             this.Ui = ui;
@@ -174,7 +176,7 @@ namespace Glamaholic.Ui {
             }
 
             if (this.Ui.Plugin.Config.ShowKofiButton) {
-                const string kofiText = "Support on Ko-fi";
+                const string kofiText = "Support Anna on Ko-fi";
                 var kofiTextSize = ImGui.CalcTextSize(kofiText);
                 ImGui.GetWindowDrawList().AddRectFilled(
                     ImGui.GetCursorScreenPos(),
@@ -245,10 +247,11 @@ namespace Glamaholic.Ui {
                         continue;
                     }
 
-                    var stainId = item.IsDyeable ? this.GetStainIdFromPart(part) : (byte) 0;
+                    // TODO: handle second dye slot, HTML probably changed
+                    var stainId = item.DyeCount != 0 ? this.GetStainIdFromPart(part) : (byte) 0;
                     items[slot.Value] = new SavedGlamourItem {
                         ItemId = item.RowId,
-                        StainId = stainId,
+                        Stain1 = stainId,
                     };
                 }
 
@@ -412,9 +415,12 @@ namespace Glamaholic.Ui {
                 ImGui.SetKeyboardFocusHere(-1);
             }
 
-            if (ImGui.BeginChild("dye picker", new Vector2(250, 350), false, ImGuiWindowFlags.HorizontalScrollbar)) {
-                if (ImGui.Selectable("None", mirage.StainId == 0)) {
-                    mirage.StainId = 0;
+            ImGui.Text("Primary Dye");
+            ImGui.NewLine();
+
+            if (ImGui.BeginChild("dye 1 picker", new Vector2(250, 350), false, ImGuiWindowFlags.HorizontalScrollbar)) {
+                if (ImGui.Selectable("None", mirage.Stain1 == 0)) {
+                    mirage.Stain1 = 0;
                     ImGui.CloseCurrentPopup();
                 }
 
@@ -429,13 +435,48 @@ namespace Glamaholic.Ui {
                         continue;
                     }
 
-                    if (ImGui.Selectable($"{stain.Name}##{stain.RowId}", mirage.StainId == stain.RowId)) {
-                        mirage.StainId = (byte) stain.RowId;
+                    if (ImGui.Selectable($"{stain.Name}##{stain.RowId}", mirage.Stain1 == stain.RowId)) {
+                        mirage.Stain1 = (byte) stain.RowId;
                         ImGui.CloseCurrentPopup();
                     }
                 }
 
                 ImGui.EndChild();
+            }
+
+            if (_editingItemDyeCount == 2) {
+                ImGui.NewLine();
+                ImGui.Separator();
+                ImGui.NewLine();
+
+                ImGui.Text("Secondary Dye");
+                ImGui.NewLine();
+
+                if (ImGui.BeginChild("dye 2 picker", new Vector2(250, 350), false, ImGuiWindowFlags.HorizontalScrollbar)) {
+                    if (ImGui.Selectable("None", mirage.Stain2 == 0)) {
+                        mirage.Stain2 = 0;
+                        ImGui.CloseCurrentPopup();
+                    }
+
+                    var filter = this._dyeFilter.ToLowerInvariant();
+
+                    foreach (var stain in this.Ui.Plugin.DataManager.GetExcelSheet<Stain>()!) {
+                        if (stain.RowId == 0 || stain.Shade == 0) {
+                            continue;
+                        }
+
+                        if (filter.Length > 0 && !stain.Name.RawString.ToLowerInvariant().Contains(filter)) {
+                            continue;
+                        }
+
+                        if (ImGui.Selectable($"{stain.Name}##{stain.RowId}", mirage.Stain2 == stain.RowId)) {
+                            mirage.Stain2 = (byte) stain.RowId;
+                            ImGui.CloseCurrentPopup();
+                        }
+                    }
+
+                    ImGui.EndChild();
+                }
             }
 
             ImGui.EndPopup();
@@ -505,8 +546,9 @@ namespace Glamaholic.Ui {
                             }
 
                             plate.Items[slot].ItemId = item.RowId;
-                            if (!item.IsDyeable) {
-                                plate.Items[slot].StainId = 0;
+                            if (item.DyeCount == 0) {
+                                plate.Items[slot].Stain1 = 0;
+                                plate.Items[slot].Stain2 = 0;
                             }
 
                             ImGui.CloseCurrentPopup();
@@ -568,31 +610,53 @@ namespace Glamaholic.Ui {
             if (mirage != null && mirage.ItemId != 0) {
                 var item = this.Ui.Plugin.DataManager.GetExcelSheet<Item>()!.GetRow(mirage.ItemId);
                 if (item != null) {
+                    tooltip += $"\n{item.Name}";
+
                     var icon = this.Ui.GetIcon(item.Icon);
                     if (icon != null) {
                         ImGui.SetCursorPos(cursorBefore + new Vector2(paddingSize / 2f));
                         ImGui.Image(icon.ImGuiHandle, new Vector2(iconSize));
                         ImGui.SetCursorPos(cursorAfter);
 
-                        var stain = this.Ui.Plugin.DataManager.GetExcelSheet<Stain>()!.GetRow(mirage.StainId);
                         var circleCentre = drawCursor + new Vector2(iconSize, 4 + paddingSize / 2f);
-                        if (mirage.StainId != 0 && stain != null) {
-                            var colour = stain.Color;
-                            var abgr = 0xFF000000;
-                            abgr |= (colour & 0xFF) << 16;
-                            abgr |= ((colour >> 8) & 0xFF) << 8;
-                            abgr |= (colour >> 16) & 0xFF;
-                            ImGui.GetWindowDrawList().AddCircleFilled(circleCentre, 4, abgr);
+                        if (mirage.Stain1 != 0) {
+                            var stain = this.Ui.Plugin.DataManager.GetExcelSheet<Stain>()!.GetRow(mirage.Stain1);
+                            if (stain != null) {
+                                var colour = stain.Color;
+                                var abgr = 0xFF000000;
+                                abgr |= (colour & 0xFF) << 16;
+                                abgr |= ((colour >> 8) & 0xFF) << 8;
+                                abgr |= (colour >> 16) & 0xFF;
+                                ImGui.GetWindowDrawList().AddCircleFilled(circleCentre, 4, abgr);
+
+                                tooltip += $"\n{stain.Name}";
+                            } else
+                                tooltip += $"\n(?)";
+                        } else {
+                            tooltip += $"\n(no primary dye)";
+
+                            if (item.DyeCount != 0)
+                                ImGui.GetWindowDrawList().AddCircle(circleCentre, 5, 0xFF000000);
                         }
 
-                        if (item.IsDyeable) {
-                            ImGui.GetWindowDrawList().AddCircle(circleCentre, 5, 0xFF000000);
-                        }
+                        circleCentre = drawCursor + new Vector2(iconSize, 16 + paddingSize / 2f);
+                        if (mirage.Stain2 != 0) {
+                            var stain = this.Ui.Plugin.DataManager.GetExcelSheet<Stain>()!.GetRow(mirage.Stain2);
+                            if (stain != null) {
+                                var colour = stain.Color;
+                                var abgr = 0xFF000000;
+                                abgr |= (colour & 0xFF) << 16;
+                                abgr |= ((colour >> 8) & 0xFF) << 8;
+                                abgr |= (colour >> 16) & 0xFF;
+                                ImGui.GetWindowDrawList().AddCircleFilled(circleCentre, 4, abgr);
 
-                        var stainName = mirage.StainId == 0 || stain == null
-                            ? ""
-                            : $" ({stain.Name})";
-                        tooltip += $"\n{item.Name}{stainName}";
+                                tooltip += $"\n{stain.Name}";
+                            } else
+                                tooltip += $"\n(?)";
+                        } else {
+                            if (item.DyeCount == 2)
+                                ImGui.GetWindowDrawList().AddCircle(circleCentre, 5, 0xFF000000);
+                        }
                     }
                 }
             } else if (mirage != null) {
@@ -629,8 +693,10 @@ namespace Glamaholic.Ui {
             }
 
             if (this._editing && ImGui.IsItemClicked(ImGuiMouseButton.Right) && mirage != null) {
-                var dyeable = this.Ui.Plugin.DataManager.GetExcelSheet<Item>()!.GetRow(mirage.ItemId)?.IsDyeable ?? false;
+                var itemData = this.Ui.Plugin.DataManager.GetExcelSheet<Item>()!.GetRow(mirage.ItemId);
+                var dyeable = itemData != null && itemData.DyeCount != 0;
                 if (dyeable) {
+                    _editingItemDyeCount = itemData!.DyeCount;
                     ImGui.OpenPopup(dyePopup);
                 }
             }
@@ -656,6 +722,7 @@ namespace Glamaholic.Ui {
                 return;
             }
 
+            ImGui.TableNextRow();
             foreach (var (left, right) in LeftSide.Zip(RightSide)) {
                 ImGui.TableNextColumn();
                 this.DrawIcon(left, plate, IconSize, paddingSize);

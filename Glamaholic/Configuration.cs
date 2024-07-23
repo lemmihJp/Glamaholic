@@ -50,12 +50,14 @@ namespace Glamaholic {
     [Serializable]
     internal class SavedGlamourItem {
         public uint ItemId { get; set; }
-        public byte StainId { get; set; }
+        public byte Stain1 { get; set; }
+        public byte Stain2 { get; set; }
 
         internal SavedGlamourItem Clone() {
             return new SavedGlamourItem() {
                 ItemId = this.ItemId,
-                StainId = this.StainId,
+                Stain1 = this.Stain1,
+                Stain2 = this.Stain2
             };
         }
     }

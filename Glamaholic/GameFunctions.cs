@@ -1,75 +1,70 @@
 ﻿using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
-using Dalamud.Memory;
-using Dalamud.Plugin.Services;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.System.Framework;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using Lumina.Excel.GeneratedSheets;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.InteropServices;
 
 namespace Glamaholic {
     internal class GameFunctions : IDisposable {
-        private static class Signatures {
-            internal const string SetGlamourPlateSlot = "E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8B 46 10 8B 1B";
-            internal const string ModifyGlamourPlateSlot = "48 89 74 24 ?? 57 48 83 EC 20 80 79 30 00 49 8B F9";
+        #region Dynamic
+        private static class FunctionDelegates {
+            internal unsafe delegate void SetGlamourPlateSlotDelegate(AgentMiragePrismMiragePlate* agent, MirageSource mirageSource, int slotOrCabinetId, uint itemId, byte stain1, byte stain2);
 
-            // 40 53 55 56 57 41 54 41 56 41 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 44 8B BC 24
-            // __int64 __fastcall sub_140CC8B10(__int64 a1, __int64 a2, __int64 a3, int a4, int a5)
-            // call with same a1, but make sure *(a1+40) > 0
-            // a2 should be at least 8 bytes long, just trash, can stackalloc
-            // a3 = 0
-            // a4 = 0
-            // a5 = 1
-            internal const string ClearGlamourPlateSlot = "80 79 30 00 4C 8B C1";
+            internal unsafe delegate void SetGlamourPlateSlotStainsDelegate(AgentMiragePrismMiragePlate* agent, InventoryItem* stain1Item, byte stain1Idx, uint stain1ItemId, InventoryItem* stain2Item, byte stain2Idx, uint stain2ItemId);
 
-            internal const string ArmoirePointer = "48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 84 C0 74 98 44 0F B7";
-            internal const string TryOn = "E8 ?? ?? ?? ?? C6 43 08 01 EB 32";
-            internal const string ExamineNamePointer = "48 8D 05 ?? ?? ?? ?? 48 89 85 ?? ?? ?? ?? 74 56 49 8B 4D";
+            internal unsafe delegate int GetCabinetItemIdDelegate(Cabinet* _this, uint baseItemId);
         }
 
-        #region Delegates
+        /*
+         * The game only calls this function when setting items from the Armoire,
+         * however it can safely be used to set items from the Glamour Dresser by providing
+         * the dresser slot in place of the cabinetId as the shared field is interpreted depending on source:
+         * - If mirageSource is the Armoure then slotOrCabinetId should be the Cabinet Item ID fetched from GetCabinetItemId.
+         * - If mirageSource is the Glamour Dresser then slotOrCabinetId should be the item slot in the dresser.
+         * 
+         * This function will always update the item that is currently selected in the Addon.
+         * 
+         * In order to set items in specific slots, you must set selectedItemSlotIdx in
+         * the AgentMiragePrismMiragePlate data first.
+         * 
+         * Updating:
+         * - TODO
+         */
+        [Signature("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8B 46 10 8B 1B")]
+        private readonly FunctionDelegates.SetGlamourPlateSlotDelegate SetGlamourPlateSlotNative = null!;
 
-        private delegate void SetGlamourPlateSlotDelegate(IntPtr agent, MirageSource mirageSource, int glamId, uint itemId, byte stainId, byte stainId2);
+        /*
+         * An InventoryItem -or- item id can be provided for both stains. If using just an item id, set stain1Item/stain2Item to null.
+         * 
+         * Updating:
+         * - Breakpoint on write to MiragePlateItem->Stain1 or MiragePlateItem->Stain2
+         * - ...
+         */
+        [Signature("48 89 74 24 ?? 57 48 83 EC 20 48 8B F2 48 8B F9 48 8B 51 28")]
+        private readonly FunctionDelegates.SetGlamourPlateSlotStainsDelegate SetGlamourPlateSlotStainsNative = null!;
 
-        private delegate void ModifyGlamourPlateSlotDelegate(IntPtr agent, PlateSlot slot, byte stainId, IntPtr numbers, int stainItemId, int stainItemId2);
-
-        private delegate void ClearGlamourPlateSlotDelegate(IntPtr agent, PlateSlot slot);
-
-        private delegate byte TryOnDelegate(uint unknownCanEquip, uint itemBaseId, ulong stainColor, ulong stainColor2, uint itemGlamourId, byte unknownByte);
+        /* 
+         * Returns the cabinet id for an item in the Armoire or 0xFFFFFFFFi64 if not found.
+         * 
+         * _this should always be UIState::Cabinet
+         * 
+         * Updating:
+         * - Xrefs:
+         *   - AgentCabinet_ReceiveEvent: before call to SetGlamourPlateSlot
+         *   - ...
+         */
+        [Signature("E8 ?? ?? ?? ?? 44 8B 0B 44 8B C0")]
+        private readonly FunctionDelegates.GetCabinetItemIdDelegate GetCabinetItemId = null!;
 
         #endregion
 
         private Plugin Plugin { get; }
-
-        #region Functions
-
-        [Signature(Signatures.SetGlamourPlateSlot)]
-        private readonly SetGlamourPlateSlotDelegate _setGlamourPlateSlot = null!;
-
-        [Signature(Signatures.ModifyGlamourPlateSlot)]
-        private readonly ModifyGlamourPlateSlotDelegate _modifyGlamourPlateSlot = null!;
-
-        [Signature(Signatures.ClearGlamourPlateSlot)]
-        private readonly ClearGlamourPlateSlotDelegate _clearGlamourPlateSlot = null!;
-
-        [Signature(Signatures.ArmoirePointer, ScanType = ScanType.StaticAddress)]
-        private readonly IntPtr _armoirePtr;
-
-        [Signature(Signatures.TryOn)]
-        private readonly TryOnDelegate _tryOn = null!;
-
-        [Signature(Signatures.ExamineNamePointer, ScanType = ScanType.StaticAddress)]
-        private readonly IntPtr _examineNamePtr;
-
-        #endregion
 
         private readonly List<uint> _filterIds = new();
 
@@ -78,17 +73,13 @@ namespace Glamaholic {
             this.Plugin.GameInteropProvider.InitializeFromAttributes(this);
 
             this.Plugin.ChatGui.ChatMessage += this.OnChat;
-            this.Plugin.ClientState.Login += OnLogin;
-            this.Plugin.Framework.Update += this.OnFrameworkUpdate;
         }
 
         public void Dispose() {
-            this.Plugin.Framework.Update -= this.OnFrameworkUpdate;
-            this.Plugin.ClientState.Login -= OnLogin;
             this.Plugin.ChatGui.ChatMessage -= this.OnChat;
         }
 
-        private void OnChat(XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled) {
+        private void OnChat(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled) {
             if (this._filterIds.Count == 0 || type != XivChatType.SystemMessage) {
                 return;
             }
@@ -98,96 +89,57 @@ namespace Glamaholic {
             }
         }
 
-        private static void OnLogin() {
-            _dresserContents = null;
-        }
+        private static unsafe AgentMiragePrismMiragePlate* MiragePlateAgent => AgentMiragePrismMiragePlate.Instance();
 
-        private bool _wasEditing;
-
-        private void OnFrameworkUpdate(IFramework framework1) {
-            var editing = Util.IsEditingPlate(this.Plugin.GameGui);
-            if (!this._wasEditing && editing) {
-                // cache dresser
-                var unused = DresserContents;
-            }
-
-            this._wasEditing = editing;
-        }
+        internal unsafe Cabinet* Armoire => &UIState.Instance()->Cabinet;
 
         internal unsafe bool ArmoireLoaded => this.Armoire->IsCabinetLoaded();
 
-        internal unsafe FFXIVClientStructs.FFXIV.Client.Game.UI.Cabinet* Armoire => (FFXIVClientStructs.FFXIV.Client.Game.UI.Cabinet*) this._armoirePtr;
+        internal unsafe string? ExamineName => UIState.Instance()->Inspect.NameString;
 
-        internal string? ExamineName => this._examineNamePtr == IntPtr.Zero
-            ? null
-            : MemoryHelper.ReadStringNullTerminated(this._examineNamePtr);
-
-        private static readonly Stopwatch DresserTimer = new();
-        private static List<GlamourItem>? _dresserContents;
-
-        internal static unsafe List<GlamourItem> DresserContents {
+        internal static unsafe List<PrismBoxItem> DresserContents {
             get {
-                if (_dresserContents != null && DresserTimer.Elapsed < TimeSpan.FromSeconds(1)) {
-                    return _dresserContents;
-                }
+                var agent = AgentMiragePrismPrismBox.Instance();
+                if (agent == null || agent->Data == null)
+                    return [];
 
-                var list = new List<GlamourItem>();
-
-                var agents = Framework.Instance()->GetUiModule()->GetAgentModule();
-                var dresserAgent = agents->GetAgentByInternalId(AgentId.MiragePrismPrismBox);
-
-                // these offsets in 6.3-HF1: AD2BEB
-                var itemsStart = *(IntPtr*) ((IntPtr) dresserAgent + 0x28);
-                if (itemsStart == IntPtr.Zero) {
-                    return _dresserContents ?? list;
-                }
-
-                for (var i = 0; i < 800; i++) {
-                    var glamItem = *(GlamourItem*) (itemsStart + i * 136);
-                    if (glamItem.ItemId == 0) {
-                        continue;
-                    }
-
-                    list.Add(glamItem);
-                }
-
-                _dresserContents = list;
-                DresserTimer.Restart();
-
-                return list;
+                // TODO check the perform implications of this
+                return new List<PrismBoxItem>(agent->Data->PrismBoxItems.ToArray());
             }
         }
 
         internal static unsafe Dictionary<PlateSlot, SavedGlamourItem>? CurrentPlate {
             get {
-                var agent = EditorAgent;
+                var agent = MiragePlateAgent;
                 if (agent == null) {
                     return null;
                 }
 
-                var editorInfo = *(IntPtr*) ((IntPtr) agent + 0x28);
-                if (editorInfo == IntPtr.Zero) {
+                var data = *(AgentMiragePrismMiragePlateData**) ((nint) agent + 0x28);
+                if (data == null)
                     return null;
-                }
 
                 var plate = new Dictionary<PlateSlot, SavedGlamourItem>();
-                foreach (var slot in (PlateSlot[]) Enum.GetValues(typeof(PlateSlot))) {
-                    // Updated: 6.1
-                    // from SetGlamourPlateSlot
-                    var item = editorInfo + 44 * (int) slot + 10596;
+                foreach (var slot in Enum.GetValues<PlateSlot>()) {
+                    ref var item = ref data->Items[(int) slot];
 
-                    var itemId = *(uint*) item;
-                    var stainId = *(byte*) (item + 24);
-                    var stainPreviewId = *(byte*) (item + 25);
-                    var actualStainId = stainPreviewId == 0 ? stainId : stainPreviewId;
-
-                    if (itemId == 0) {
+                    if (item.ItemId == 0)
                         continue;
-                    }
+
+                    var stain1 =
+                        item.PreviewStain1 != 0
+                            ? item.PreviewStain1
+                            : item.Stain1;
+
+                    var stain2 =
+                        item.PreviewStain2 != 0
+                            ? item.PreviewStain2
+                            : item.Stain2;
 
                     plate[slot] = new SavedGlamourItem {
-                        ItemId = itemId,
-                        StainId = actualStainId,
+                        ItemId = item.ItemId,
+                        Stain1 = stain1,
+                        Stain2 = stain2,
                     };
                 }
 
@@ -195,18 +147,16 @@ namespace Glamaholic {
             }
         }
 
-        private static unsafe AgentInterface* EditorAgent => Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.MiragePrismMiragePlate);
-
-        internal unsafe void SetGlamourPlateSlot(MirageSource source, int glamId, uint itemId, byte stainId, byte stainId2) {
-            this._setGlamourPlateSlot((IntPtr) EditorAgent, source, glamId, itemId, stainId, stainId2);
+        internal unsafe void SetGlamourPlateSlotItem(MirageSource source, int slotOrCabinetId, uint itemId, byte stainId, byte stainId2) {
+            SetGlamourPlateSlotNative(MiragePlateAgent, source, slotOrCabinetId, itemId, stainId, stainId2);
         }
 
-        internal unsafe void ModifyGlamourPlateSlot(PlateSlot slot, byte stainId, IntPtr numbers, int stainItemId, int stainItemId2) {
-            this._modifyGlamourPlateSlot((IntPtr) EditorAgent, slot, stainId, numbers, stainItemId, stainItemId2);
+        internal unsafe void SetGlamourPlateSlotStains(PlateSlot slot, byte stain1Idx, uint stain1Item, byte stain2Idx, uint stain2Item) {
+            SetGlamourPlateSlotStainsNative(MiragePlateAgent, null, stain1Idx, stain1Item, null, stain2Idx, stain2Item);
         }
 
         internal unsafe bool IsInArmoire(uint itemId) {
-            var row = this.Plugin.DataManager.GetExcelSheet<Cabinet>()!.FirstOrDefault(row => row.Item.Row == itemId);
+            var row = this.Plugin.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Cabinet>()!.FirstOrDefault(row => row.Item.Row == itemId);
             if (row == null) {
                 return false;
             }
@@ -215,7 +165,7 @@ namespace Glamaholic {
         }
 
         internal unsafe uint? ArmoireIndexIfPresent(uint itemId) {
-            var row = this.Plugin.DataManager.GetExcelSheet<Cabinet>()!.FirstOrDefault(row => row.Item.Row == itemId);
+            var row = this.Plugin.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Cabinet>()!.FirstOrDefault(row => row.Item.Row == itemId);
             if (row == null) {
                 return null;
             }
@@ -227,81 +177,90 @@ namespace Glamaholic {
         }
 
         internal unsafe void LoadPlate(SavedPlate plate) {
-            var agent = EditorAgent;
+            var agent = MiragePlateAgent;
             if (agent == null) {
                 return;
             }
 
-            // Updated: 6.11 C98BC0
-            var editorInfo = *(IntPtr*) ((IntPtr) agent + 0x28);
-            if (editorInfo == IntPtr.Zero) {
+            var data = *(AgentMiragePrismMiragePlateData**) ((nint) agent + 0x28);
+            if (data == null)
                 return;
-            }
 
             var dresser = DresserContents;
             var current = CurrentPlate;
             var usedStains = new Dictionary<(uint, uint), uint>();
 
-            // Updated: 6.11 C984CF
-            // current plate 6.11 C9AC9F
-            var slotPtr = (PlateSlot*) (editorInfo + 0x18);
-            var initialSlot = *slotPtr;
+            var initialSlot = data->SelectedItemIndex;
             foreach (var (slot, item) in plate.Items) {
                 if (current != null && current.TryGetValue(slot, out var currentItem)) {
-                    if (currentItem.ItemId == item.ItemId && currentItem.StainId == item.StainId) {
+                    if (currentItem.ItemId == item.ItemId
+                        && currentItem.Stain1 == item.Stain1
+                        && currentItem.Stain2 == item.Stain2) {
                         // ignore already-correct items
                         continue;
                     }
                 }
 
-                *slotPtr = slot;
+                data->SelectedItemIndex = (uint) slot;
                 if (item.ItemId == 0) {
-                    this._clearGlamourPlateSlot((IntPtr) agent, slot);
+                    uint previousContextSlot = data->ContextMenuItemIndex;
+                    data->ContextMenuItemIndex = (uint) slot;
+
+                    AtkValue rv;
+                    agent->ReceiveEvent(&rv, null, 0, 1); // "Remove Item Image from Plate"
+
+                    data->ContextMenuItemIndex = previousContextSlot;
                     continue;
                 }
 
                 var source = MirageSource.GlamourDresser;
-                var info = (0, 0u, (byte) 0);
+
+                var info = (0, 0u, (byte) 0, (byte) 0);
+
                 // find an item in the dresser that matches
                 var matchingIds = dresser.FindAll(mirage => mirage.ItemId % Util.HqItemOffset == item.ItemId);
                 if (matchingIds.Count == 0) {
                     // if not in the glamour dresser, look in the armoire
                     if (this.ArmoireIndexIfPresent(item.ItemId) is { } armoireIdx) {
                         source = MirageSource.Armoire;
-                        info = ((int) armoireIdx, item.ItemId, 0);
+                        int cabinetId = GetCabinetItemId(&UIState.Instance()->Cabinet, item.ItemId);
+
+                        info = (cabinetId, item.ItemId, 0, 0);
                     }
                 } else {
-                    // try to find an item with a matching stain
-                    var idx = matchingIds.FindIndex(mirage => mirage.StainId == item.StainId);
-                    if (idx == -1) {
+                    // try to find an item with matching stains
+                    var idx = matchingIds.FindIndex(mirage =>
+                        mirage.Stains[0] == item.Stain1
+                        && mirage.Stains[1] == item.Stain2);
+
+                    if (idx == -1)
                         idx = 0;
-                    }
 
                     var mirage = matchingIds[idx];
-                    info = ((int) mirage.Index, mirage.ItemId, mirage.StainId, mirage.StainId2);
+                    info = ((int) mirage.Slot, mirage.ItemId, mirage.Stains[0], mirage.Stains[1]);
                 }
 
                 if (info.Item1 == 0) {
                     continue;
                 }
 
-                this._setGlamourPlateSlot(
-                    (IntPtr) agent,
+                SetGlamourPlateSlotItem(
                     source,
-                    info.Item1,
-                    info.Item2,
-                    info.Item3,
-                    info.Item4
+                    info.Item1, // slot or cabinet id
+                    info.Item2, // item id
+                    info.Item3, // stain 1
+                    info.Item4  // stain 2
                 );
 
-                if (item.StainId != info.Item3) {
+                // TODO
+                if (item.Stain1 != info.Item3 || item.Stain2 != info.Item4) {
                     // mirage in dresser did not have stain for this item, so apply it
-                    this.ApplyStain(agent, slot, item, usedStains);
+                    this.ApplyStains(slot, item, usedStains);
                 }
             }
 
             // restore initial slot, since changing this does not update the ui
-            *slotPtr = initialSlot;
+            data->SelectedItemIndex = initialSlot;
         }
 
         private static readonly InventoryType[] PlayerInventories = {
@@ -311,20 +270,21 @@ namespace Glamaholic {
             InventoryType.Inventory4,
         };
 
-        private unsafe void ApplyStain(AgentInterface* editorAgent, PlateSlot slot, SavedGlamourItem item, Dictionary<(uint, uint), uint> usedStains) {
-            // find the dye for this stain in the player's inventory
+        private unsafe uint SelectStainItemId(byte stainId, Dictionary<(uint, uint), uint> usedStains) {
             var inventory = InventoryManager.Instance();
-            var transient = this.Plugin.DataManager.GetExcelSheet<StainTransient>()!.GetRow(item.StainId);
-            (int itemId, int qty, int inv, int slot) dyeInfo = (0, 0, -1, 0);
+            var transient = this.Plugin.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.StainTransient>()!.GetRow(stainId);
+
+            uint itemId = 0;
+
             var items = new[] { transient?.Item1?.Value, transient?.Item2?.Value };
             foreach (var dyeItem in items) {
                 if (dyeItem == null || dyeItem.RowId == 0) {
                     continue;
                 }
 
-                if (dyeInfo.itemId == 0) {
+                if (itemId == 0) {
                     // use the first one (free one) as placeholder
-                    dyeInfo.itemId = (int) dyeItem.RowId;
+                    itemId = dyeItem.RowId;
                 }
 
                 foreach (var type in PlayerInventories) {
@@ -336,7 +296,8 @@ namespace Glamaholic {
                     for (var i = 0; i < inv->Size; i++) {
                         var address = ((uint) type, (uint) i);
                         var invItem = inv->Items[i];
-                        if (invItem.ItemID != dyeItem.RowId) {
+
+                        if (invItem.ItemId != dyeItem.RowId) {
                             continue;
                         }
 
@@ -345,7 +306,8 @@ namespace Glamaholic {
                         }
 
                         // first one that we find in the inventory is the one we'll use
-                        dyeInfo = ((int) dyeItem.RowId, (int) inv->Items[i].Quantity, (int) type, i);
+                        itemId = dyeItem.RowId;
+
                         if (usedStains.ContainsKey(address)) {
                             usedStains[address] += 1;
                         } else {
@@ -361,34 +323,26 @@ namespace Glamaholic {
                 }
             }
 
-            // do nothing if there is no dye item found
-            if (dyeInfo.itemId == 0) {
+            return itemId;
+        }
+
+        private unsafe void ApplyStains(PlateSlot slot, SavedGlamourItem item, Dictionary<(uint, uint), uint> usedStains) {
+            var stain1ItemId =
+                item.Stain1 != 0
+                ? SelectStainItemId(item.Stain1, usedStains)
+                : 0;
+
+            var stain2ItemId =
+                item.Stain2 != 0
+                ? SelectStainItemId(item.Stain2, usedStains)
+                : 0;
+
+            // TODO: should this be the correct behaviour?
+            // Perhaps we should just omit one of the stains if not found
+            if (stain1ItemId == 0 || stain2ItemId == 0)
                 return;
-            }
 
-            var info = new ColorantInfo((uint) dyeInfo.inv, (ushort) dyeInfo.slot, (uint) dyeInfo.itemId, (uint) dyeInfo.qty);
-
-            // allocate 24 bytes to store dye info if we have the dye
-            var mem = dyeInfo.inv == -1
-                ? IntPtr.Zero
-                : Marshal.AllocHGlobal(24);
-
-            if (mem != IntPtr.Zero) {
-                *(ColorantInfo*) mem = info;
-            }
-
-            this._modifyGlamourPlateSlot(
-                (IntPtr) editorAgent,
-                slot,
-                item.StainId,
-                mem,
-                dyeInfo.Item1,
-                0
-            );
-
-            if (mem != IntPtr.Zero) {
-                Marshal.FreeHGlobal(mem);
-            }
+            SetGlamourPlateSlotStains(slot, item.Stain1, stain1ItemId, item.Stain2, stain2ItemId);
         }
 
         internal void TryOn(uint itemId, byte stainId, byte stainId2, bool suppress = true) {
@@ -396,82 +350,7 @@ namespace Glamaholic {
                 this._filterIds.Add(itemId);
             }
 
-            this._tryOn(0xFF, itemId % Util.HqItemOffset, stainId, stainId2, 0, 0);
-        }
-    }
-
-    internal enum MirageSource {
-        GlamourDresser = 1,
-        Armoire = 2,
-    }
-
-    internal enum PlateSlot : uint {
-        MainHand = 0,
-        OffHand = 1,
-        Head = 2,
-        Body = 3,
-        Hands = 4,
-        Legs = 5,
-        Feet = 6,
-        Ears = 7,
-        Neck = 8,
-        Wrists = 9,
-        RightRing = 10,
-        LeftRing = 11,
-    }
-
-    internal static class PlateSlotExt {
-        internal static string Name(this PlateSlot slot) {
-            return slot switch {
-                PlateSlot.MainHand => "Main Hand",
-                PlateSlot.OffHand => "Off Hand",
-                PlateSlot.Head => "Head",
-                PlateSlot.Body => "Body",
-                PlateSlot.Hands => "Hands",
-                PlateSlot.Legs => "Legs",
-                PlateSlot.Feet => "Feet",
-                PlateSlot.Ears => "Ears",
-                PlateSlot.Neck => "Neck",
-                PlateSlot.Wrists => "Wrists",
-                PlateSlot.RightRing => "Right Ring",
-                PlateSlot.LeftRing => "Left Ring",
-                _ => throw new ArgumentOutOfRangeException(nameof(slot), slot, null),
-            };
-        }
-    }
-
-    [StructLayout(LayoutKind.Explicit, Size = 136)]
-    internal readonly struct GlamourItem {
-        [FieldOffset(0x70)]
-        internal readonly uint Index;
-
-        [FieldOffset(0x74)]
-        internal readonly uint ItemId;
-
-        [FieldOffset(0x86)]
-        internal readonly byte StainId;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    [SuppressMessage("ReSharper", "PrivateFieldCanBeConvertedToLocalVariable")]
-    internal readonly struct ColorantInfo {
-        private readonly uint InventoryId;
-        private readonly ushort InventorySlot;
-        private readonly byte Unk3;
-        private readonly byte Unk4;
-        private readonly uint StainItemId;
-        private readonly uint StainItemCount;
-        private readonly ulong Unk7;
-
-        internal ColorantInfo(uint inventoryId, ushort inventorySlot, uint stainItemId, uint stainItemCount) {
-            this.InventoryId = inventoryId;
-            this.InventorySlot = inventorySlot;
-            this.StainItemId = stainItemId;
-            this.StainItemCount = stainItemCount;
-
-            this.Unk3 = 0;
-            this.Unk4 = 0;
-            this.Unk7 = 0;
+            AgentTryon.TryOn(0, itemId % Util.HqItemOffset, stainId, stainId2);
         }
     }
 }

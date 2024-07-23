@@ -78,18 +78,18 @@ namespace Glamaholic.Ui {
                 }
 
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
-                    this.Ui.Plugin.Functions.TryOn(alt.RowId, 0, false);
+                    this.Ui.Plugin.Functions.TryOn(alt.RowId, 0, 0, false);
                 }
 
                 ImGui.SameLine();
 
-                if (!alt.IsDyeable) {
+                if (alt.DyeCount == 0) {
                     ImGui.PushStyleColor(ImGuiCol.Text, ImGui.GetStyle().Colors[(int) ImGuiCol.TextDisabled]);
                 }
 
                 Util.TextIcon(FontAwesomeIcon.FillDrip);
 
-                if (!alt.IsDyeable) {
+                if (alt.DyeCount == 0) {
                     ImGui.PopStyleColor();
                 }
 

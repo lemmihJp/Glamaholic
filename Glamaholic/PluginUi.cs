@@ -1,4 +1,4 @@
-﻿using FFXIVClientStructs.FFXIV.Client.System.Framework;
+﻿using Dalamud.Interface.Textures.TextureWraps;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Glamaholic.Ui;
 using Glamaholic.Ui.Helpers;
@@ -9,8 +9,6 @@ using System.Linq;
 namespace Glamaholic {
     internal class PluginUi : IDisposable {
         internal Plugin Plugin { get; }
-
-        private Dictionary<ushort, IDalamudTextureWrap> Icons { get; } = new();
 
         private MainInterface MainInterface { get; }
         private EditorHelper EditorHelper { get; }
@@ -42,15 +40,13 @@ namespace Glamaholic {
 
             this.Plugin.Interface.UiBuilder.Draw += this.Draw;
             this.Plugin.Interface.UiBuilder.OpenConfigUi += this.OpenMainInterface;
+            this.Plugin.Interface.UiBuilder.OpenMainUi += this.OpenMainInterface;
         }
 
         public void Dispose() {
+            this.Plugin.Interface.UiBuilder.OpenMainUi -= this.OpenMainInterface;
             this.Plugin.Interface.UiBuilder.OpenConfigUi -= this.OpenMainInterface;
             this.Plugin.Interface.UiBuilder.Draw -= this.Draw;
-
-            foreach (var icon in this.Icons.Values) {
-                icon.Dispose();
-            }
         }
 
         internal void OpenMainInterface() {
@@ -62,16 +58,7 @@ namespace Glamaholic {
         }
 
         internal IDalamudTextureWrap? GetIcon(ushort id) {
-            if (this.Icons.TryGetValue(id, out var cached)) {
-                return cached;
-            }
-
-            var icon = this.Plugin.TextureProvider.GetIcon(id);
-            if (icon == null) {
-                return null;
-            }
-
-            this.Icons[id] = icon;
+            var icon = this.Plugin.TextureProvider.GetFromGameIcon(new Dalamud.Interface.Textures.GameIconLookup(id)).GetWrapOrDefault();
             return icon;
         }
 
@@ -93,10 +80,9 @@ namespace Glamaholic {
 
         internal unsafe void TryOn(IEnumerable<SavedGlamourItem> items) {
             void SetTryOnSave(bool save) {
-                var tryOnAgent = (IntPtr) Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.Tryon);
-                if (tryOnAgent != IntPtr.Zero) {
-                    *(byte*) (tryOnAgent + 0x30A) = (byte) (save ? 1 : 0);
-                }
+                var tryOnAgent = AgentTryon.Instance();
+                if (tryOnAgent != null)
+                    *(byte*) ((nint) tryOnAgent + 0x35E) = (byte) (save ? 1 : 0);
             }
 
             SetTryOnSave(false);
@@ -105,7 +91,7 @@ namespace Glamaholic {
                     continue;
                 }
 
-                this.Plugin.Functions.TryOn(mirage.ItemId, mirage.StainId);
+                this.Plugin.Functions.TryOn(mirage.ItemId, mirage.Stain1, mirage.Stain2);
                 SetTryOnSave(true);
             }
         }

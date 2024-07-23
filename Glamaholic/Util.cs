@@ -11,7 +11,7 @@ namespace Glamaholic {
         private const string BoxAddon = "MiragePrismPrismBox";
         private const string ArmoireAddon = "CabinetWithdraw";
 
-        internal const uint HqItemOffset = 1_000_000;
+        internal const uint HqItemOffset = 1_000_000; // The XIV code uses 500,000 but I'll trust this
 
         private static unsafe bool IsOpen(AtkUnitBase* addon) {
             return addon != null && addon->IsVisible;
