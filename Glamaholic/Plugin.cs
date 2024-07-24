@@ -51,7 +51,7 @@ namespace Glamaholic {
 
 #pragma warning disable 8618
         public Plugin() {
-            this.Config = this.Interface!.GetPluginConfig() as Configuration ?? new Configuration();
+            this.Config = Configuration.LoadAndMigrate(this.Interface!.ConfigFile);
 
             this.Functions = new GameFunctions(this);
             this.Ui = new PluginUi(this);
