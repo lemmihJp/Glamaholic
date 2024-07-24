@@ -35,6 +35,9 @@ namespace Glamaholic {
         }
 
         internal static Configuration LoadAndMigrate(FileInfo fileInfo) {
+            if (!fileInfo.Exists)
+                return new Configuration();
+
             JObject cfg;
 
             // i hate it so much
