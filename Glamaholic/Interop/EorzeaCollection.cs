@@ -2,6 +2,7 @@
 using HtmlAgilityPack;
 using Lumina.Excel;
 using Lumina.Excel.GeneratedSheets;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -49,11 +50,20 @@ namespace Glamaholic.Interop {
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Add("User-Agent", USER_AGENT);
 
-            var resp = await httpClient.GetAsync(url);
-            if (!resp.IsSuccessStatusCode) {
-                LogDebug($"{url} returned status code {resp.StatusCode}");
+            HttpResponseMessage? resp = null;
+            try {
+                resp = await httpClient.GetAsync(url);
+                if (!resp.IsSuccessStatusCode) {
+                    Plugin.Log.Warning($"EorzeaCollection Import: {url} returned status code {resp.StatusCode}:\n{await resp.Content.ReadAsStringAsync()}");
+                    return null;
+                }
+            } catch (Exception e) {
+                Plugin.Log.Warning(e, $"EorzeaCollection Import: Request failed with Exception");
                 return null;
             }
+
+            if (resp == null)
+                return null;
 
             var doc = new HtmlDocument();
             doc.LoadHtml(await resp.Content.ReadAsStringAsync());
@@ -65,11 +75,11 @@ namespace Glamaholic.Interop {
             if (titleNode != null)
                 title = HttpUtility.HtmlDecode(titleNode.InnerText);
 
-            LogDebug($"Title is {title}");
+            LogDebug($"EC Glamour title: {title}");
 
             var gearSlots = root.SelectNodes(ITEM_CONTAINER_PATH);
             if (gearSlots.Count == 0) {
-                LogDebug("No gear slots found in the document");
+                Plugin.Log.Warning("EorzeaCollection Import: No gear slots found in the document");
                 return null;
             }
 
