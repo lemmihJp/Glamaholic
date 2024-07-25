@@ -218,10 +218,7 @@ namespace Glamaholic.Ui {
 
                 this._ecImporting = false;
 
-                var plate = new SavedPlate(import.Value.Name) {
-                    Items = import.Value.Items,
-                };
-                this.Ui.Plugin.Config.AddPlate(plate);
+                this.Ui.Plugin.Config.AddPlate(import);
                 this.Ui.Plugin.SaveConfig();
                 this.SwitchPlate(this.Ui.Plugin.Config.Plates.Count - 1, true);
             });

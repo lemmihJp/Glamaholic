@@ -1,51 +1,30 @@
 ﻿using Dalamud.Game;
-using HtmlAgilityPack;
-using Lumina.Excel;
 using Lumina.Excel.GeneratedSheets;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using System.Web;
 
 namespace Glamaholic.Interop {
     internal class EorzeaCollection {
-        private const string TITLE_NODE_PATH = "//b[contains(@class, 'b-title-text-bold')]";
-        private const string ITEM_CONTAINER_PATH = "//div[contains(@class, 'b-info-box-item-wrapper')]";
-        private const string ITEM_LINK_PATH = ".//a[contains(@class, 'c-gear-slot')]";
-        private const string ITEM_NAME_PATH = ".//span[contains(@class, 'c-gear-slot-item-name')]";
-        private const string ITEM_STAIN_PATH = ".//span[contains(@class, 'c-gear-slot-item-info-color')]";
+        private const string BASE_URL = "https://ffxiv.eorzeacollection.com/api/glamour/";
 
         // The default HttpClient UA is blocked by CloudFlare
         private const string USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
 
-        private const bool DEBUG_LOG_ENABLED = false;
-
-        private static readonly List<(string, PlateSlot)> ItemSlotClasses = new() {
-            ( "c-gear-slot-weapon", PlateSlot.MainHand ),
-            ( "c-gear-slot-offhand", PlateSlot.OffHand ),
-            ( "c-gear-slot-head", PlateSlot.Head ),
-            ( "c-gear-slot-body", PlateSlot.Body ),
-            ( "c-gear-slot-hands", PlateSlot.Hands ),
-            ( "c-gear-slot-legs", PlateSlot.Legs ),
-            ( "c-gear-slot-feet", PlateSlot.Feet ),
-            ( "c-gear-slot-earrings", PlateSlot.Ears ),
-            ( "c-gear-slot-necklace", PlateSlot.Neck ),
-            ( "c-gear-slot-bracelets", PlateSlot.Wrists ),
-            ( "c-gear-slot-ring", PlateSlot.LeftRing),
-        };
-
         private static bool HasLoggedError { get; set; } = false;
 
-        internal struct ECGlamour {
-            public string Name;
-            public Dictionary<PlateSlot, SavedGlamourItem> Items;
-        }
+        public static async Task<SavedPlate?> ImportFromURL(string userFacingURL) {
+            string? url = ConvertURLForAPI(userFacingURL);
+            if (url == null) {
+                Plugin.Log.Error($"EorzeaCollection Import: Invalid URL '{userFacingURL}'");
+                return null;
+            }
 
-        public static async Task<ECGlamour?> ImportFromURL(string url) {
-            var itemSheet = Plugin.DataManager.GetExcelSheet<Item>(ClientLanguage.English);
-            var stainSheet = Plugin.DataManager.GetExcelSheet<Stain>(ClientLanguage.English);
+            var itemSheet = Plugin.DataManager.GetExcelSheet<Item>(ClientLanguage.English)!;
+            var stainSheet = Plugin.DataManager.GetExcelSheet<Stain>(ClientLanguage.English)!;
 
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Add("User-Agent", USER_AGENT);
@@ -54,7 +33,7 @@ namespace Glamaholic.Interop {
             try {
                 resp = await httpClient.GetAsync(url);
                 if (!resp.IsSuccessStatusCode) {
-                    Plugin.Log.Warning($"EorzeaCollection Import: {url} returned status code {resp.StatusCode}:\n{await resp.Content.ReadAsStringAsync()}");
+                    Plugin.Log.Warning($"EorzeaCollection Import returned status code {resp.StatusCode}:\n{await resp.Content.ReadAsStringAsync()}");
                     return null;
                 }
             } catch (Exception e) {
@@ -65,165 +44,148 @@ namespace Glamaholic.Interop {
             if (resp == null)
                 return null;
 
-            var doc = new HtmlDocument();
-            doc.LoadHtml(await resp.Content.ReadAsStringAsync());
+            try {
+                var glam = JsonConvert.DeserializeObject<Glamour>(await resp.Content.ReadAsStringAsync());
+                SavedPlate plate = new(glam.Name);
 
-            var root = doc.DocumentNode;
+                foreach (var gearSlot in glam.Gear) {
+                    var ecSlotName = gearSlot.Key;
+                    if (ecSlotName == "fashion" || ecSlotName == "facewear")
+                        continue;
 
-            string title = "New EC Import";
-            var titleNode = root.SelectSingleNode(TITLE_NODE_PATH);
-            if (titleNode != null)
-                title = HttpUtility.HtmlDecode(titleNode.InnerText);
+                    if (!gearSlot.Value.HasValue)
+                        continue;
 
-            LogDebug($"EC Glamour title: {title}");
+                    var plateSlot = ParseSlot(ecSlotName);
+                    if (plateSlot == null)
+                        continue;
 
-            var gearSlots = root.SelectNodes(ITEM_CONTAINER_PATH);
-            if (gearSlots.Count == 0) {
-                Plugin.Log.Warning("EorzeaCollection Import: No gear slots found in the document");
+                    var name = gearSlot.Value.Value.Name.ToLower();
+                    var dyes = gearSlot.Value.Value.Dyes;
+
+                    if (name.Length == 0)
+                        continue;
+
+                    var item = itemSheet.FirstOrDefault(i => i?.Name.ToString().ToLower() == name, null);
+                    if (item == null) {
+                        Plugin.Log.Warning($"EorzeaCollection Import: Item '{name}' not found in Item sheet");
+                        continue;
+                    }
+
+                    if (dyes == null) {
+                        plate.Items.Add(plateSlot.Value, new SavedGlamourItem() { ItemId = item.RowId });
+                        continue;
+                    }
+
+                    byte stain1, stain2 = stain1 = 0;
+
+                    if (dyes[0] != "none") {
+                        var stain = stainSheet.FirstOrDefault(s => s?.Name.ToString().ToLower() == dyes[0], null);
+
+                        if (stain != null) {
+                            stain1 = (byte) stain.RowId;
+                        } else
+                            Plugin.Log.Warning($"EorzeaCollection Import: Stain '{dyes[0]}' not found in Stain sheet");
+                    }
+
+                    if (dyes.Length > 1 && dyes[1] != "none") {
+                        var stain = stainSheet.FirstOrDefault(s => s?.Name.ToString().ToLower() == dyes[1], null);
+
+                        if (stain != null) {
+                            stain2 = (byte) stain.RowId;
+                        } else
+                            Plugin.Log.Warning($"EorzeaCollection Import: Stain '{dyes[1]}' not found in Stain sheet");
+                    }
+
+                    plate.Items.Add(plateSlot.Value, new SavedGlamourItem() { ItemId = item.RowId, Stain1 = stain1, Stain2 = stain2 });
+                } // end foreach in gear
+
+                return plate;
+            } catch (Exception e) {
+                Plugin.Log.Warning($"EorzeaCollection Import: Failed to parse response: {e.Message}");
                 return null;
             }
-
-            var items = new Dictionary<PlateSlot, SavedGlamourItem>();
-
-            LogDebug($"Parsing {gearSlots.Count} item elements");
-
-            bool hasRing = false;
-            foreach (var element in gearSlots) {
-                var item = ParseItem(element, itemSheet!, stainSheet!);
-                if (item == null)
-                    continue;
-
-                PlateSlot slot = item.Value.Item1;
-                if (slot == PlateSlot.LeftRing) {
-                    if (hasRing) {
-                        slot = PlateSlot.RightRing;
-                    } else
-                        hasRing = true;
-                }
-
-                items.Add(slot, item.Value.Item2);
-            }
-
-            return new ECGlamour() {
-                Name = title,
-                Items = items,
-            };
         }
 
-        private static (PlateSlot, SavedGlamourItem)? ParseItem(HtmlNode node, ExcelSheet<Item> itemSheet, ExcelSheet<Stain> stainSheet) {
-            var slot = ParseSlotFromItemNode(node);
-            if (slot == null)
+        private static string? ConvertURLForAPI(string userFacingURL) {
+            if (!Uri.TryCreate(userFacingURL, UriKind.Absolute, out var uri))
                 return null;
 
-            var name = ParseNameFromItemNode(node);
-            if (name == null)
+            if (uri.Host != "ffxiv.eorzeacollection.com")
                 return null;
 
-            name = HttpUtility.HtmlDecode(name);
-
-            LogDebug($"{slot.Value}: {name}");
-
-            name = name.ToLower();
-
-            var itemData = itemSheet.FirstOrDefault(
-                i => i.EquipSlotCategory.Row != 0
-                    && i.Name.ToString().ToLower() == name,
-                null);
-
-            if (itemData == null)
+            var path = uri.AbsolutePath;
+            if (!path.StartsWith("/glamour/"))
                 return null;
 
-            var stains = ParseStainsFromItemNode(node, stainSheet);
+            var parts = path.Split("/");
+            // [0] is empty, [1] is "glamour", [2] is the ID
 
-            return (
-                slot.Value,
-                new SavedGlamourItem {
-                    ItemId = itemData.RowId,
-                    Stain1 = stains.Item1,
-                    Stain2 = stains.Item2,
-                }
-            );
+            if (!Int64.TryParse(parts[2], out _))
+                return null;
+
+            return BASE_URL + parts[2];
         }
 
-        private static PlateSlot? ParseSlotFromItemNode(HtmlNode node) {
-            var dbLinkElement = node.SelectSingleNode(ITEM_LINK_PATH);
-            if (dbLinkElement == null) {
-                LogParsingError("ParseSlotFromItemNode is missing the c-gear-slot element");
-                return null;
+        private static PlateSlot? ParseSlot(string slot) {
+            switch (slot) {
+                case "head":
+                    return PlateSlot.Head;
+                case "body":
+                    return PlateSlot.Body;
+                case "hands":
+                    return PlateSlot.Hands;
+                case "legs":
+                    return PlateSlot.Legs;
+                case "feet":
+                    return PlateSlot.Feet;
+                case "weapon":
+                    return PlateSlot.MainHand;
+                case "offhand":
+                    return PlateSlot.OffHand;
+                case "earrings":
+                    return PlateSlot.Ears;
+                case "necklace":
+                    return PlateSlot.Neck;
+                case "bracelets":
+                    return PlateSlot.Wrists;
+                case "left_ring":
+                    return PlateSlot.LeftRing;
+                case "right_ring":
+                    return PlateSlot.RightRing;
+                default:
+                    Plugin.Log.Warning($"EorzeaCollection Import: Unknown slot '{slot}'");
+                    return null;
             }
-
-            PlateSlot? slot = null;
-            foreach (var slotClasses in ItemSlotClasses) {
-                if (dbLinkElement.HasClass(slotClasses.Item1)) {
-                    slot = slotClasses.Item2;
-                    break;
-                }
-            }
-
-            if (slot == null) {
-                LogParsingError("ParseSlotFromItemNode could not determine slot from class");
-                return null;
-            }
-
-            return slot;
         }
 
-        private static string? ParseNameFromItemNode(HtmlNode node) {
-            var nameElement = node.SelectSingleNode(ITEM_NAME_PATH);
-            if (nameElement == null) {
-                LogParsingError("ParseNameFromItemNode is missing the name element");
-                return null;
-            }
+        [Serializable]
+        private struct Glamour {
+            [JsonProperty("id")]
+            public uint ID { get; private set; }
 
-            return nameElement.InnerText;
+            [JsonProperty("name")]
+            public string Name { get; private set; }
+
+            [JsonProperty("character")]
+            public string Character { get; private set; }
+
+            [JsonProperty("server")]
+            public string Server { get; private set; }
+
+            [JsonProperty("gear")]
+            public Dictionary<string, GlamourSlot?> Gear { get; private set; }
         }
 
-        private static (byte, byte) ParseStainsFromItemNode(HtmlNode node, ExcelSheet<Stain> stainSheet) {
-            var stainElements = node.SelectNodes(ITEM_STAIN_PATH);
-            if (stainElements == null || stainElements.Count == 0) {
-                return (0, 0);
-            }
+        [Serializable]
+        private struct GlamourSlot {
+            [JsonProperty("name")]
+            public string Name { get; private set; }
 
-            string stain1Name = stainElements[0].InnerText.ToLower().Substring(2);
-            uint stain1 = stainSheet.FirstOrDefault(s => s.RowId != 0 && s.Name.ToString().ToLower() == stain1Name, null)?.RowId ?? 0;
+            [JsonProperty("dyes")]
+            private string _Dyes { get; set; }
 
-            LogDebug($"Stain 1: {stain1Name}");
-
-            if (stainElements.Count == 1 || stainElements.Count == 2)
-                return ((byte) stain1, 0);
-
-            int secondIdx = stainElements.Count == 2 ? 1 : 2;
-
-            string stain2Name = stainElements[secondIdx].InnerText.ToLower().Substring(2);
-            uint stain2 = stainSheet.FirstOrDefault(s => s.RowId != 0 && s.Name.ToString().ToLower() == stain2Name, null)?.RowId ?? 0;
-
-            LogDebug($"Stain 2: {stain2Name}");
-
-            return ((byte) stain1, (byte) stain2);
-        }
-
-        private static void LogParsingError(string error) {
-            if (HasLoggedError && !DEBUG_LOG_ENABLED)
-                return;
-
-            HasLoggedError = true;
-            Plugin.Log.Error("EorzeaCollection parsing error: " + error);
-
-            if (!DEBUG_LOG_ENABLED)
-                Plugin.Log.Error("Further parsing errors will be suppressed.");
-
-            Plugin.ChatGui.PrintError("EorzeaCollection parsing error: " + error);
-            Plugin.ChatGui.PrintError("If this issue persists, please report it to the plugin developer.");
-
-            if (!DEBUG_LOG_ENABLED)
-                Plugin.ChatGui.PrintError("Further parsing errors will be suppressed.");
-        }
-
-        private static void LogDebug(string message) {
-            if (!DEBUG_LOG_ENABLED)
-                return;
-
-            Plugin.Log.Info("[EorzeaCollection Debug] " + message);
+            public string[]? Dyes => _Dyes?.Replace("-", " ").Split(',');
         }
     }
 }
