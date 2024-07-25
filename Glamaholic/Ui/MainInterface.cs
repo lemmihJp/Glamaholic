@@ -359,7 +359,7 @@ namespace Glamaholic.Ui {
                 ImGui.SetKeyboardFocusHere(-1);
             }
 
-            ImGui.Text("Primary Dye");
+            ImGui.TextUnformatted("Primary Dye");
             ImGui.NewLine();
 
             if (ImGui.BeginChild("dye 1 picker", new Vector2(250, 350), false, ImGuiWindowFlags.HorizontalScrollbar)) {
@@ -393,7 +393,7 @@ namespace Glamaholic.Ui {
                 ImGui.Separator();
                 ImGui.NewLine();
 
-                ImGui.Text("Secondary Dye");
+                ImGui.TextUnformatted("Secondary Dye");
                 ImGui.NewLine();
 
                 if (ImGui.BeginChild("dye 2 picker", new Vector2(250, 350), false, ImGuiWindowFlags.HorizontalScrollbar)) {
