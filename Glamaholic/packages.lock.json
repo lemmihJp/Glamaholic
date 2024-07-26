@@ -14,12 +14,6 @@
         "resolved": "6.8.0",
         "contentHash": "hfZ/f8Mezt8aTkgv9nsvFdYoQ809/AqwsJlOGOPYIfBcG2aAIG3v3ex9d8ZqQuFYyMoucjRg4eKy3VleeGodKQ=="
       },
-      "HtmlAgilityPack": {
-        "type": "Direct",
-        "requested": "[1.11.61, )",
-        "resolved": "1.11.61",
-        "contentHash": "hqZASeEFHS9quHvfZSwaULoAJLWkOYVPiQjc3P9J4pQS8vSYzrP3bxe04Vm7vYYuxwbQhq9hCSVvZVLTyRaNaQ=="
-      },
       "Resourcer.Fody": {
         "type": "Direct",
         "requested": "[1.8.1, )",
