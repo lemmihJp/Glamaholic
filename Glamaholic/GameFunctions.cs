@@ -296,21 +296,18 @@ namespace Glamaholic {
             InventoryType.Inventory4,
         };
 
-        private unsafe uint SelectStainItemId(byte stainId, Dictionary<(uint, uint), uint> usedStains) {
+        private unsafe InventoryItem* SelectStainItem(byte stainId, Dictionary<(uint, uint), uint> usedStains, out uint bestItemId) {
             var inventory = InventoryManager.Instance();
             var transient = Plugin.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.StainTransient>()!.GetRow(stainId);
 
-            uint itemId = 0;
+            InventoryItem* item = null;
+
+            bestItemId = transient?.Item1?.Value?.RowId ?? (transient?.Item2?.Value?.RowId ?? 0);
 
             var items = new[] { transient?.Item1?.Value, transient?.Item2?.Value };
             foreach (var dyeItem in items) {
                 if (dyeItem == null || dyeItem.RowId == 0) {
                     continue;
-                }
-
-                if (itemId == 0) {
-                    // use the first one (free one) as placeholder
-                    itemId = dyeItem.RowId;
                 }
 
                 foreach (var type in PlayerInventories) {
@@ -332,7 +329,8 @@ namespace Glamaholic {
                         }
 
                         // first one that we find in the inventory is the one we'll use
-                        itemId = dyeItem.RowId;
+                        item = &inv->Items[i];
+                        bestItemId = invItem.ItemId;
 
                         if (usedStains.ContainsKey(address)) {
                             usedStains[address] += 1;
@@ -349,26 +347,16 @@ namespace Glamaholic {
                 }
             }
 
-            return itemId;
+            return item;
         }
 
         private unsafe void ApplyStains(PlateSlot slot, SavedGlamourItem item, Dictionary<(uint, uint), uint> usedStains) {
-            var stain1ItemId =
-                item.Stain1 != 0
-                ? SelectStainItemId(item.Stain1, usedStains)
-                : 0;
+            var stain1Item = SelectStainItem(item.Stain1, usedStains, out var stain1ItemId);
+            var stain2Item = SelectStainItem(item.Stain2, usedStains, out var stain2ItemId);
 
-            var stain2ItemId =
-                item.Stain2 != 0
-                ? SelectStainItemId(item.Stain2, usedStains)
-                : 0;
+            Plugin.Log.Info($"{(nint) stain1Item:X16}, {stain1ItemId}, {(nint) stain2Item:X16}, {stain2ItemId} -> {item.Stain1}, {item.Stain2}");
 
-            // TODO: should this be the correct behaviour?
-            // Perhaps we should just omit one of the stains if not found
-            if (stain1ItemId == 0 || stain2ItemId == 0)
-                return;
-
-            SetGlamourPlateSlotStains(slot, item.Stain1, stain1ItemId, item.Stain2, stain2ItemId);
+            SetGlamourPlateSlotStainsNative(MiragePlateAgent, stain1Item, item.Stain1, stain1ItemId, stain2Item, item.Stain2, stain2ItemId);
         }
 
         internal void TryOn(uint itemId, byte stainId, byte stainId2, bool suppress = true) {
