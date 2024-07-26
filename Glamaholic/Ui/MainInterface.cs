@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Glamaholic.Ui {
@@ -673,7 +674,7 @@ namespace Glamaholic.Ui {
         }
 
         private void DrawPlateButtons(SavedPlate plate) {
-            if (this._editing || !ImGui.BeginTable("plate buttons", 5, ImGuiTableFlags.SizingFixedFit)) {
+            if (this._editing || !ImGui.BeginTable("plate buttons", 6, ImGuiTableFlags.SizingFixedFit)) {
                 return;
             }
 
@@ -706,6 +707,12 @@ namespace Glamaholic.Ui {
             ImGui.TableNextColumn();
             if (Util.IconButton(FontAwesomeIcon.ShareAltSquare, tooltip: "Share")) {
                 ImGui.SetClipboardText(JsonConvert.SerializeObject(new SharedPlate(plate)));
+                this.AddTimedMessage("Copied to clipboard.");
+            }
+
+            ImGui.TableNextColumn();
+            if (Util.IconButton(FontAwesomeIcon.FileExport, tooltip: "Export as Text")) {
+                ImGui.SetClipboardText(ConvertToText(plate));
                 this.AddTimedMessage("Copied to clipboard.");
             }
 
@@ -905,6 +912,62 @@ namespace Glamaholic.Ui {
                 .Where(item => Util.MatchesSlot(item.EquipSlotCategory.Value!, slot))
                 .Where(item => this._itemFilter.Length == 0 || item.Name.RawString.ToLowerInvariant().Contains(filter))
                 .ToList();
+        }
+
+        private string ConvertToText(SavedPlate plate) {
+            var itemSheet = Plugin.DataManager.GetExcelSheet<Item>()!;
+            var stainSheet = Plugin.DataManager.GetExcelSheet<Stain>()!;
+
+            StringBuilder sb = new();
+            sb.AppendLine(plate.Name);
+            sb.AppendLine("---");
+            foreach (var kvp in plate.Items) {
+                if (kvp.Value.ItemId == 0) {
+                    continue;
+                } else {
+                    sb.Append(kvp.Key.ToString()).Append(": ");
+
+                    var item = itemSheet.GetRow(kvp.Value.ItemId);
+                    if (item == null) {
+                        sb.AppendLine("Unknown Item");
+                    } else {
+                        sb.Append(item.Name);
+
+                        bool hasStain = kvp.Value.Stain1 != 0 || kvp.Value.Stain2 != 0;
+                        if (!hasStain) {
+                            sb.AppendLine();
+                            continue;
+                        }
+
+                        sb.Append(" (");
+                        if (kvp.Value.Stain1 != 0) {
+                            var stain = stainSheet.GetRow(kvp.Value.Stain1);
+                            if (stain == null) {
+                                sb.Append("Unknown Stain");
+                            } else {
+                                sb.Append(stain.Name);
+                            }
+                        } else
+                            sb.Append("-, ");
+
+                        if (kvp.Value.Stain2 != 0) {
+                            if (kvp.Value.Stain1 != 0)
+                                sb.Append(", ");
+
+                            var stain = stainSheet.GetRow(kvp.Value.Stain2);
+                            if (stain == null) {
+                                sb.Append("Unknown Stain");
+                            } else {
+                                sb.Append(stain.Name);
+                            }
+                        }
+
+                        sb.AppendLine(")");
+                    }
+                }
+            }
+
+            return sb.ToString();
         }
     }
 }
