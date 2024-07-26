@@ -201,7 +201,6 @@ namespace Glamaholic.Ui {
         }
 
         private void ImportEorzeaCollection(string url) {
-            Plugin.Log.Info("ImportEorzeaCollection");
             if (!IsValidEorzeaCollectionUrl(url)) {
                 return;
             }
@@ -209,7 +208,6 @@ namespace Glamaholic.Ui {
             this._ecImporting = true;
 
             Task.Run(async () => {
-                Plugin.Log.Info("Running async task");
                 var import = await EorzeaCollection.ImportFromURL(url);
                 if (import == null) {
                     this._ecImporting = false;

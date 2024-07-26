@@ -354,8 +354,6 @@ namespace Glamaholic {
             var stain1Item = SelectStainItem(item.Stain1, usedStains, out var stain1ItemId);
             var stain2Item = SelectStainItem(item.Stain2, usedStains, out var stain2ItemId);
 
-            Plugin.Log.Info($"{(nint) stain1Item:X16}, {stain1ItemId}, {(nint) stain2Item:X16}, {stain2ItemId} -> {item.Stain1}, {item.Stain2}");
-
             SetGlamourPlateSlotStainsNative(MiragePlateAgent, stain1Item, item.Stain1, stain1ItemId, stain2Item, item.Stain2, stain2ItemId);
         }
 
