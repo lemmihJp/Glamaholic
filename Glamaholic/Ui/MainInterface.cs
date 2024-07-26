@@ -689,7 +689,7 @@ namespace Glamaholic.Ui {
 
             ImGui.TableNextColumn();
             if (Util.IconButton(FontAwesomeIcon.Search, tooltip: "Try on")) {
-                this.Ui.TryOn(plate.Items.Values);
+                this.Ui.TryOnPlate(plate);
             }
 
             ImGui.TableNextColumn();
@@ -773,7 +773,20 @@ namespace Glamaholic.Ui {
             if (this._selectedPlate > -1 && this._selectedPlate < this.Ui.Plugin.Config.Plates.Count) {
                 var plate = this._editingPlate ?? this.Ui.Plugin.Config.Plates[this._selectedPlate];
 
-                this.DrawPlatePreview(plate);
+                {
+                    ImGui.BeginGroup();
+                    this.DrawPlatePreview(plate);
+                    ImGui.EndGroup();
+                }
+
+                ImGui.SameLine();
+                ImGui.SetCursorPosX(ImGui.GetCursorPosX() + 10);
+
+                {
+                    ImGui.BeginGroup();
+                    this.DrawPlateSettings(plate);
+                    ImGui.EndGroup();
+                }
 
                 var renameWasVisible = this._showRename;
 
@@ -813,6 +826,31 @@ namespace Glamaholic.Ui {
             }
 
             ImGui.EndChild();
+        }
+
+        private void DrawPlateSettings(SavedPlate plate) {
+            ImGui.TextUnformatted("Customize");
+            ImGui.Separator();
+
+            bool fillSlots = ImGui.Button("Fill Empty Slots with New Emperor");
+            if (ImGui.IsItemHovered())
+                ImGui.SetTooltip("Fills empty slots with the New Emperor set.");
+
+            if (fillSlots)
+                this.FillEmptySlots(plate);
+
+            ImGui.NewLine();
+            ImGui.TextUnformatted("Settings");
+            ImGui.Separator();
+
+            bool newEmperor = plate.FillWithNewEmperor;
+            if (ImGui.Checkbox("Fill empty slots with New Emperor for Try on & Apply", ref newEmperor)) {
+                plate.FillWithNewEmperor = newEmperor;
+                this.Ui.Plugin.SaveConfig();
+            }
+
+            if (ImGui.IsItemHovered())
+                ImGui.SetTooltip("Does not modify the glamour itself!\n\nIf enabled, empty slots will be filled with the New Emperor set when tried on or applied to plates.");
         }
 
         private void DrawWarnings() {
@@ -912,6 +950,25 @@ namespace Glamaholic.Ui {
                 .Where(item => Util.MatchesSlot(item.EquipSlotCategory.Value!, slot))
                 .Where(item => this._itemFilter.Length == 0 || item.Name.RawString.ToLowerInvariant().Contains(filter))
                 .ToList();
+        }
+
+        private void FillEmptySlots(SavedPlate plate) {
+            foreach (var slot in Enum.GetValues<PlateSlot>()) {
+                if (plate.Items.ContainsKey(slot))
+                    continue;
+
+                uint emperor = Util.GetEmperorItemForSlot(slot);
+                if (emperor == 0)
+                    continue;
+
+                plate.Items[slot] = new SavedGlamourItem {
+                    ItemId = emperor,
+                    Stain1 = 0,
+                    Stain2 = 0,
+                };
+            }
+
+            this.Ui.Plugin.SaveConfig();
         }
 
         private string ConvertToText(SavedPlate plate) {

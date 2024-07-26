@@ -141,6 +141,32 @@ namespace Glamaholic {
             };
         }
 
+        internal static uint GetEmperorItemForSlot(PlateSlot slot) {
+            switch (slot) {
+                case PlateSlot.Head:
+                    return 10032;
+                case PlateSlot.Body:
+                    return 10033;
+                case PlateSlot.Hands:
+                    return 10034;
+                case PlateSlot.Legs:
+                    return 10035;
+                case PlateSlot.Feet:
+                    return 10036;
+                case PlateSlot.Ears:
+                    return 9293;
+                case PlateSlot.Neck:
+                    return 9292;
+                case PlateSlot.Wrists:
+                    return 9294;
+                case PlateSlot.RightRing:
+                case PlateSlot.LeftRing:
+                    return 9295;
+                default:
+                    return 0;
+            }
+        }
+
         internal static bool IsItemMiddleOrCtrlClicked() {
             if (ImGui.IsItemClicked(ImGuiMouseButton.Middle)) {
                 return true;

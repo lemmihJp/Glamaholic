@@ -217,7 +217,18 @@ namespace Glamaholic {
             var usedStains = new Dictionary<(uint, uint), uint>();
 
             var initialSlot = data->SelectedItemIndex;
-            foreach (var (slot, item) in plate.Items) {
+            foreach (var slot in Enum.GetValues<PlateSlot>()) {
+                if (!plate.Items.TryGetValue(slot, out var item)) {
+                    if (!plate.FillWithNewEmperor)
+                        continue;
+
+                    uint emperorId = Util.GetEmperorItemForSlot(slot);
+                    if (emperorId != 0)
+                        item = new SavedGlamourItem { ItemId = emperorId };
+                    else
+                        continue;
+                }
+
                 if (current != null && current.TryGetValue(slot, out var currentItem)) {
                     if (currentItem.ItemId == item.ItemId
                         && currentItem.Stain1 == item.Stain1

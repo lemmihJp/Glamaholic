@@ -112,6 +112,7 @@ namespace Glamaholic {
         public string Name { get; set; }
         public Dictionary<PlateSlot, SavedGlamourItem> Items { get; init; } = new();
         public List<string> Tags { get; } = new();
+        public bool FillWithNewEmperor { get; set; } = false;
 
         public SavedPlate(string name) {
             this.Name = name;

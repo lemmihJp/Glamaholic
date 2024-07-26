@@ -95,5 +95,31 @@ namespace Glamaholic {
                 SetTryOnSave(true);
             }
         }
+
+        internal unsafe void TryOnPlate(SavedPlate plate) {
+            void SetTryOnSave(bool save) {
+                var tryOnAgent = AgentTryon.Instance();
+                if (tryOnAgent != null)
+                    *(byte*) ((nint) tryOnAgent + 0x35E) = (byte) (save ? 1 : 0);
+            }
+
+            SetTryOnSave(false);
+            foreach (var slot in Enum.GetValues<PlateSlot>()) {
+                if (!plate.Items.TryGetValue(slot, out var item) || item.ItemId == 0) {
+                    if (plate.FillWithNewEmperor) {
+                        uint emperor = Util.GetEmperorItemForSlot(slot);
+                        if (emperor != 0) {
+                            this.Plugin.Functions.TryOn(emperor, 0, 0);
+                            SetTryOnSave(true);
+                        }
+                    }
+
+                    continue;
+                }
+
+                this.Plugin.Functions.TryOn(item.ItemId, item.Stain1, item.Stain2);
+                SetTryOnSave(true);
+            }
+        }
     }
 }
