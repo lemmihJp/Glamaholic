@@ -292,7 +292,11 @@ namespace Glamaholic {
                 // TODO
                 if (item.Stain1 != info.Item3 || item.Stain2 != info.Item4) {
                     // mirage in dresser did not have stain for this item, so apply it
+
+                    uint previousContextSlot = data->ContextMenuItemIndex;
+                    data->ContextMenuItemIndex = (uint) slot;
                     this.ApplyStains(slot, item, usedStains);
+                    data->ContextMenuItemIndex = previousContextSlot;
                 }
             }
 
