@@ -259,7 +259,7 @@ namespace Glamaholic {
 
                 var source = MirageSource.GlamourDresser;
 
-                var info = (0, 0u, (byte) 0, (byte) 0);
+                var info = (-1, 0u, (byte) 0, (byte) 0);
 
                 Plugin.LogTroubleshooting($"Searching for {slot} {item.ItemId} ({item.Stain1}, {item.Stain2})");
 
@@ -294,7 +294,7 @@ namespace Glamaholic {
                     Plugin.LogTroubleshooting($"Item {item.ItemId} found in dresser at slot {mirage.Slot} with stains {mirage.Stain1}, {mirage.Stain2} ({(matchWithStains ? "matched" : "mismatched")})");
                 }
 
-                if (info.Item1 == 0) {
+                if (info.Item1 == -1) {
                     Plugin.LogTroubleshooting($"Item {item.ItemId} could not be found, skipping!");
                     continue;
                 }
