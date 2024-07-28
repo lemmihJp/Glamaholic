@@ -203,12 +203,16 @@ namespace Glamaholic {
         }
 
         internal unsafe void LoadPlate(SavedPlate plate) {
+            Plugin.LogTroubleshooting("Begin LoadPlate()");
+
             var agent = MiragePlateAgent;
             if (agent == null) {
                 return;
             }
 
             var data = *(AgentMiragePrismMiragePlateData**) ((nint) agent + 0x28);
+            Plugin.LogTroubleshooting($"AgentMiragePrismMiragePlateData*: {(nint) data:X16}");
+
             if (data == null)
                 return;
 
@@ -234,12 +238,15 @@ namespace Glamaholic {
                         && currentItem.Stain1 == item.Stain1
                         && currentItem.Stain2 == item.Stain2) {
                         // ignore already-correct items
+                        Plugin.LogTroubleshooting($"Skipping {slot}: expected item state is already in plate");
                         continue;
                     }
                 }
 
                 data->SelectedItemIndex = (uint) slot;
                 if (item.ItemId == 0) {
+                    Plugin.LogTroubleshooting($"Clearing {slot}: slot is explicitly empty");
+
                     uint previousContextSlot = data->ContextMenuItemIndex;
                     data->ContextMenuItemIndex = (uint) slot;
 
@@ -254,8 +261,12 @@ namespace Glamaholic {
 
                 var info = (0, 0u, (byte) 0, (byte) 0);
 
+                Plugin.LogTroubleshooting($"Searching for {slot} {item.ItemId} ({item.Stain1}, {item.Stain2})");
+
                 // find an item in the dresser that matches
-                var matchingIds = dresser.FindAll(mirage => mirage.ItemId % Util.HqItemOffset == item.ItemId);
+                var matchingIds = dresser.FindAll(mirage => (mirage.ItemId % Util.ItemModifierMod) == item.ItemId);
+                Plugin.LogTroubleshooting($"Dresser has {matchingIds.Count} items matching {item.ItemId}");
+
                 if (matchingIds.Count == 0) {
                     // if not in the glamour dresser, look in the armoire
                     if (this.ArmoireIndexIfPresent(item.ItemId) is { } armoireIdx) {
@@ -263,6 +274,8 @@ namespace Glamaholic {
                         int cabinetId = GetCabinetItemId(&UIState.Instance()->Cabinet, item.ItemId);
 
                         info = (cabinetId, item.ItemId, 0, 0);
+
+                        Plugin.LogTroubleshooting($"Item {item.ItemId} found in armoire with cabinet id {cabinetId}");
                     }
                 } else {
                     // try to find an item with matching stains
@@ -270,17 +283,23 @@ namespace Glamaholic {
                         mirage.Stain1 == item.Stain1
                         && mirage.Stain2 == item.Stain2);
 
+                    bool matchWithStains = idx != -1;
+
                     if (idx == -1)
                         idx = 0;
 
                     var mirage = matchingIds[idx];
                     info = ((int) mirage.Slot, mirage.ItemId, mirage.Stain1, mirage.Stain2);
+
+                    Plugin.LogTroubleshooting($"Item {item.ItemId} found in dresser at slot {mirage.Slot} with stains {mirage.Stain1}, {mirage.Stain2} ({(matchWithStains ? "matched" : "mismatched")})");
                 }
 
                 if (info.Item1 == 0) {
+                    Plugin.LogTroubleshooting($"Item {item.ItemId} could not be found, skipping!");
                     continue;
                 }
 
+                Plugin.LogTroubleshooting($"SetGlamourPlateItemSlot({source}, {info.Item1}, {info.Item2}, {info.Item3}, {info.Item4})");
                 SetGlamourPlateSlotItem(
                     source,
                     info.Item1, // slot or cabinet id
@@ -295,6 +314,7 @@ namespace Glamaholic {
 
                     uint previousContextSlot = data->ContextMenuItemIndex;
                     data->ContextMenuItemIndex = (uint) slot;
+                    Plugin.LogTroubleshooting($"Applying stains to {slot}: {item.Stain1}, {item.Stain2}");
                     this.ApplyStains(slot, item, usedStains);
                     data->ContextMenuItemIndex = previousContextSlot;
                 }
@@ -302,6 +322,9 @@ namespace Glamaholic {
 
             // restore initial slot, since changing this does not update the ui
             data->SelectedItemIndex = initialSlot;
+            data->HasChanges = true;
+
+            Plugin.LogTroubleshooting("End LoadPlate()");
         }
 
         private static readonly InventoryType[] PlayerInventories = {
@@ -369,6 +392,7 @@ namespace Glamaholic {
             var stain1Item = SelectStainItem(item.Stain1, usedStains, out var stain1ItemId);
             var stain2Item = SelectStainItem(item.Stain2, usedStains, out var stain2ItemId);
 
+            Plugin.LogTroubleshooting($"SetGlamourPlateSlotStains({(stain1Item != null ? stain1Item->Slot : 0)}, {item.Stain1}, {stain1ItemId}, {(stain2Item != null ? stain2Item->Slot : 0)}, {item.Stain2}, {stain2ItemId})");
             SetGlamourPlateSlotStainsNative(MiragePlateAgent, stain1Item, item.Stain1, stain1ItemId, stain2Item, item.Stain2, stain2ItemId);
         }
 

@@ -12,6 +12,7 @@ namespace Glamaholic {
         private const string ArmoireAddon = "CabinetWithdraw";
 
         internal const uint HqItemOffset = 1_000_000; // The XIV code uses 500,000 but I'll trust this
+        internal const uint ItemModifierMod = 500_000;
 
         private static unsafe bool IsOpen(AtkUnitBase* addon) {
             return addon != null && addon->IsVisible;

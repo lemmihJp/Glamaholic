@@ -65,6 +65,13 @@ namespace Glamaholic {
             this.Functions.Dispose();
         }
 
+        public void LogTroubleshooting(string message) {
+            if (!Config.TroubleshootingMode)
+                return;
+
+            Log.Info($"[Troubleshooting] {message}");
+        }
+
         internal void SaveConfig() {
             this.Interface.SavePluginConfig(this.Config);
         }

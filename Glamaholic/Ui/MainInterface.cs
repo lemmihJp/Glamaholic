@@ -155,6 +155,8 @@ namespace Glamaholic.Ui {
                 anyChanged |= ImGui.MenuItem("Show try on menu", null, ref this.Ui.Plugin.Config.ShowTryOnMenu);
                 ImGui.Separator();
                 anyChanged |= ImGui.MenuItem("Show Ko-fi button", null, ref this.Ui.Plugin.Config.ShowKofiButton);
+                ImGui.Separator();
+                anyChanged |= ImGui.MenuItem("Troubleshooting mode", null, ref this.Ui.Plugin.Config.TroubleshootingMode);
 
                 ImGui.EndMenu();
             }

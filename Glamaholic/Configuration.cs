@@ -19,6 +19,7 @@ namespace Glamaholic {
         public bool ShowTryOnMenu = true;
         public bool ShowKofiButton = true;
         public bool ItemFilterShowObtainedOnly;
+        public bool TroubleshootingMode = false;
 
         internal static void SanitisePlate(SavedPlate plate) {
             var valid = Enum.GetValues<PlateSlot>();

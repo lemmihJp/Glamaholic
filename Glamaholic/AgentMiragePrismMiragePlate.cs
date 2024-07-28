@@ -7,7 +7,10 @@ namespace Glamaholic {
     [StructLayout(LayoutKind.Explicit, Size = 0x3B38)]
     internal struct AgentMiragePrismMiragePlateData {
         [FieldOffset(0x0)]
-        private uint _IsModified; // may actually be a bitset, but seems to be used as a 4-byte bool.. :(
+        private bool Unk0;
+
+        [FieldOffset(0x1)]
+        public bool HasChanges;
 
         [FieldOffset(0x14)]
         private uint _SelectedMiragePlateIndex;
@@ -25,11 +28,6 @@ namespace Glamaholic {
 
         [FieldOffset(0x3864)]
         private FixedSizeArray12<MiragePlateItem> _Items;
-
-        public bool IsModified {
-            get => _IsModified != 0;
-            set => _IsModified = value ? 1u : 0u;
-        }
 
         public uint SelectedMiragePlateIndex {
             get => _SelectedMiragePlateIndex;
