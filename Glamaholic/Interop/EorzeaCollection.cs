@@ -185,7 +185,25 @@ namespace Glamaholic.Interop {
             [JsonProperty("dyes")]
             private string _Dyes { get; set; }
 
-            public string[]? Dyes => _Dyes?.Replace("-", " ").Split(',');
+            public string[]? Dyes {
+                get {
+                    if (_Dyes == null)
+                        return null;
+
+                    string[] dyes = _Dyes.Split(",");
+                    for (int i = 0; i < dyes.Length; i++)
+                        dyes[i] = FixupDyeName(dyes[i]);
+
+                    return dyes;
+                }
+            }
+
+            private string FixupDyeName(string dye) {
+                dye = dye.ToLower();
+                if (dye == "opo-opo-brown")
+                    return "opo-opo brown";
+                return dye.Replace("-", " ");
+            }
         }
     }
 }
