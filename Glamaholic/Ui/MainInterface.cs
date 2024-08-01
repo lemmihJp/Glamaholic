@@ -122,25 +122,31 @@ namespace Glamaholic.Ui {
                     this.SwitchPlate(this.Ui.Plugin.Config.Plates.Count - 1, true);
                 }
 
-                if (ImGui.BeginMenu("Import")) {
-                    if (ImGui.MenuItem("Clipboard")) {
-                        var json = Util.GetClipboardText();
-                        try {
-                            var plate = JsonConvert.DeserializeObject<SharedPlate>(json);
-                            if (plate != null) {
-                                this.Ui.Plugin.Config.AddPlate(plate.ToPlate());
-                                this.Ui.Plugin.SaveConfig();
-                                this.Ui.SwitchPlate(this.Ui.Plugin.Config.Plates.Count - 1);
-                            }
-                        } catch (Exception ex) {
-                            Service.Log.Warning(ex, "Failed to import glamour plate");
+                if (ImGui.MenuItem("Import from Clipboard")) {
+                    var json = Util.GetClipboardText();
+                    try {
+                        var plate = JsonConvert.DeserializeObject<SharedPlate>(json);
+                        if (plate != null) {
+                            this.Ui.Plugin.Config.AddPlate(plate.ToPlate());
+                            this.Ui.Plugin.SaveConfig();
+                            this.Ui.SwitchPlate(this.Ui.Plugin.Config.Plates.Count - 1);
                         }
+                    } catch (Exception ex) {
+                        Service.Log.Warning(ex, "Failed to import glamour plate");
                     }
+                }
 
-                    var validUrl = IsValidEorzeaCollectionUrl(Util.GetClipboardText());
-                    if (ImGui.MenuItem("Copied Eorzea Collection URL", validUrl) && !this._ecImporting) {
-                        this.ImportEorzeaCollection(Util.GetClipboardText());
-                    }
+                ImGui.EndMenu();
+            }
+
+            if (ImGui.BeginMenu("Eorzea Collection")) {
+                var validUrl = IsValidEorzeaCollectionUrl(Util.GetClipboardText());
+                if (ImGui.BeginMenu("Import from URL", validUrl) && !this._ecImporting) {
+                    if (ImGui.MenuItem("New Plate"))
+                        this.ImportEorzeaCollection(Util.GetClipboardText(), ECImportTarget.NewPlate);
+
+                    if (Interop.Glamourer.IsAvailable() && ImGui.MenuItem("Try On (Glamourer)"))
+                        this.ImportEorzeaCollection(Util.GetClipboardText(), ECImportTarget.TryOnGlamourer);
 
                     ImGui.EndMenu();
                 }
@@ -203,7 +209,12 @@ namespace Glamaholic.Ui {
             ImGui.EndMenuBar();
         }
 
-        private void ImportEorzeaCollection(string url) {
+        private enum ECImportTarget {
+            NewPlate,
+            TryOnGlamourer,
+        }
+
+        private void ImportEorzeaCollection(string url, ECImportTarget target) {
             if (!IsValidEorzeaCollectionUrl(url)) {
                 return;
             }
@@ -219,9 +230,16 @@ namespace Glamaholic.Ui {
 
                 this._ecImporting = false;
 
-                this.Ui.Plugin.Config.AddPlate(import);
-                this.Ui.Plugin.SaveConfig();
-                this.SwitchPlate(this.Ui.Plugin.Config.Plates.Count - 1, true);
+                switch (target) {
+                    case ECImportTarget.NewPlate:
+                        this.Ui.Plugin.Config.AddPlate(import);
+                        this.Ui.Plugin.SaveConfig();
+                        this.SwitchPlate(this.Ui.Plugin.Config.Plates.Count - 1, true);
+                        break;
+                    case ECImportTarget.TryOnGlamourer:
+                        Interop.Glamourer.TryOn(import);
+                        break;
+                }
             });
         }
 
@@ -840,6 +858,15 @@ namespace Glamaholic.Ui {
 
             if (fillSlots)
                 this.FillEmptySlots(plate);
+
+            if (Interop.Glamourer.IsAvailable()) {
+                ImGui.NewLine();
+                ImGui.TextUnformatted("Glamourer");
+                ImGui.Separator();
+
+                if (ImGui.Button("Try On"))
+                    Interop.Glamourer.TryOn(plate);
+            }
 
             ImGui.NewLine();
             ImGui.TextUnformatted("Settings");

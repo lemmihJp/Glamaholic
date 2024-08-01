@@ -22,6 +22,9 @@
         "dependencies": {
           "Fody": "6.6.4"
         }
+      },
+      "glamourer.api": {
+        "type": "Project"
       }
     }
   }
