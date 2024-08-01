@@ -145,6 +145,9 @@ namespace Glamaholic.Ui {
                     if (ImGui.MenuItem("New Plate"))
                         this.ImportEorzeaCollection(Util.GetClipboardText(), ECImportTarget.NewPlate);
 
+                    if (ImGui.MenuItem("Try On"))
+                        this.ImportEorzeaCollection(Util.GetClipboardText(), ECImportTarget.TryOn);
+
                     if (Interop.Glamourer.IsAvailable() && ImGui.MenuItem("Try On (Glamourer)"))
                         this.ImportEorzeaCollection(Util.GetClipboardText(), ECImportTarget.TryOnGlamourer);
 
@@ -211,6 +214,7 @@ namespace Glamaholic.Ui {
 
         private enum ECImportTarget {
             NewPlate,
+            TryOn,
             TryOnGlamourer,
         }
 
@@ -235,6 +239,9 @@ namespace Glamaholic.Ui {
                         this.Ui.Plugin.Config.AddPlate(import);
                         this.Ui.Plugin.SaveConfig();
                         this.SwitchPlate(this.Ui.Plugin.Config.Plates.Count - 1, true);
+                        break;
+                    case ECImportTarget.TryOn:
+                        this.Ui.TryOnPlate(import);
                         break;
                     case ECImportTarget.TryOnGlamourer:
                         Interop.Glamourer.TryOn(import);
