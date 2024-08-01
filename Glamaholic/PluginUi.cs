@@ -38,15 +38,15 @@ namespace Glamaholic {
             this.ExamineHelper = new ExamineHelper(this);
             this.TryOnHelper = new TryOnHelper(this);
 
-            this.Plugin.Interface.UiBuilder.Draw += this.Draw;
-            this.Plugin.Interface.UiBuilder.OpenConfigUi += this.OpenMainInterface;
-            this.Plugin.Interface.UiBuilder.OpenMainUi += this.OpenMainInterface;
+            Service.Interface.UiBuilder.Draw += this.Draw;
+            Service.Interface.UiBuilder.OpenConfigUi += this.OpenMainInterface;
+            Service.Interface.UiBuilder.OpenMainUi += this.OpenMainInterface;
         }
 
         public void Dispose() {
-            this.Plugin.Interface.UiBuilder.OpenMainUi -= this.OpenMainInterface;
-            this.Plugin.Interface.UiBuilder.OpenConfigUi -= this.OpenMainInterface;
-            this.Plugin.Interface.UiBuilder.Draw -= this.Draw;
+            Service.Interface.UiBuilder.OpenMainUi -= this.OpenMainInterface;
+            Service.Interface.UiBuilder.OpenConfigUi -= this.OpenMainInterface;
+            Service.Interface.UiBuilder.Draw -= this.Draw;
         }
 
         internal void OpenMainInterface() {
@@ -58,7 +58,7 @@ namespace Glamaholic {
         }
 
         internal IDalamudTextureWrap? GetIcon(ushort id) {
-            var icon = this.Plugin.TextureProvider.GetFromGameIcon(new Dalamud.Interface.Textures.GameIconLookup(id)).GetWrapOrDefault();
+            var icon = Service.TextureProvider.GetFromGameIcon(new Dalamud.Interface.Textures.GameIconLookup(id)).GetWrapOrDefault();
             return icon;
         }
 

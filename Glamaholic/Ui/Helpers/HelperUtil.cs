@@ -79,7 +79,7 @@ namespace Glamaholic.Ui.Helpers {
                 try {
                     dropdown();
                 } catch (Exception ex) {
-                    Plugin.Log.Error(ex, "Error drawing helper combo");
+                    Service.Log.Error(ex, "Error drawing helper combo");
                 }
 
                 ImGui.EndCombo();

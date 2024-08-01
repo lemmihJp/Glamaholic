@@ -64,12 +64,12 @@ namespace Glamaholic.Ui {
             this.Ui = ui;
 
             // get all equippable items that aren't soul crystals
-            this.Items = Plugin.DataManager.GetExcelSheet<Item>(ClientLanguage.English)!
+            this.Items = Service.DataManager.GetExcelSheet<Item>(ClientLanguage.English)!
                 .Where(row => row.EquipSlotCategory.Row is not 0 && row.EquipSlotCategory.Value!.SoulCrystal == 0)
                 .ToList();
             this.FilteredItems = this.Items;
 
-            this.Stains = Plugin.DataManager.GetExcelSheet<Stain>(ClientLanguage.English)!
+            this.Stains = Service.DataManager.GetExcelSheet<Stain>(ClientLanguage.English)!
                 .Where(row => row.RowId != 0)
                 .Where(row => !string.IsNullOrWhiteSpace(row.Name.RawString))
                 .ToDictionary(row => row.Name.RawString, row => (byte) row.RowId);
@@ -133,7 +133,7 @@ namespace Glamaholic.Ui {
                                 this.Ui.SwitchPlate(this.Ui.Plugin.Config.Plates.Count - 1);
                             }
                         } catch (Exception ex) {
-                            Plugin.Log.Warning(ex, "Failed to import glamour plate");
+                            Service.Log.Warning(ex, "Failed to import glamour plate");
                         }
                     }
 
@@ -234,7 +234,7 @@ namespace Glamaholic.Ui {
             if (ImGui.InputTextWithHint("##plate-filter", "Search...", ref this._plateFilter, 512, ImGuiInputTextFlags.AutoSelectAll)) {
                 this.PlateFilter = this._plateFilter.Length == 0
                     ? null
-                    : new FilterInfo(Plugin.DataManager, this._plateFilter);
+                    : new FilterInfo(Service.DataManager, this._plateFilter);
             }
 
             (int src, int dst)? drag = null;
@@ -368,7 +368,7 @@ namespace Glamaholic.Ui {
 
                 var filter = this._dyeFilter.ToLowerInvariant();
 
-                foreach (var stain in Plugin.DataManager.GetExcelSheet<Stain>()!) {
+                foreach (var stain in Service.DataManager.GetExcelSheet<Stain>()!) {
                     if (stain.RowId == 0 || stain.Shade == 0) {
                         continue;
                     }
@@ -402,7 +402,7 @@ namespace Glamaholic.Ui {
 
                     var filter = this._dyeFilter.ToLowerInvariant();
 
-                    foreach (var stain in Plugin.DataManager.GetExcelSheet<Stain>()!) {
+                    foreach (var stain in Service.DataManager.GetExcelSheet<Stain>()!) {
                         if (stain.RowId == 0 || stain.Shade == 0) {
                             continue;
                         }
@@ -550,7 +550,7 @@ namespace Glamaholic.Ui {
             var cursorAfter = ImGui.GetCursorPos();
 
             if (mirage != null && mirage.ItemId != 0) {
-                var item = Plugin.DataManager.GetExcelSheet<Item>()!.GetRow(mirage.ItemId);
+                var item = Service.DataManager.GetExcelSheet<Item>()!.GetRow(mirage.ItemId);
                 if (item != null) {
                     tooltip += $"\n{item.Name}";
 
@@ -562,7 +562,7 @@ namespace Glamaholic.Ui {
 
                         var circleCentre = drawCursor + new Vector2(iconSize, 4 + paddingSize / 2f);
                         if (mirage.Stain1 != 0) {
-                            var stain = Plugin.DataManager.GetExcelSheet<Stain>()!.GetRow(mirage.Stain1);
+                            var stain = Service.DataManager.GetExcelSheet<Stain>()!.GetRow(mirage.Stain1);
                             if (stain != null) {
                                 var colour = stain.Color;
                                 var abgr = 0xFF000000;
@@ -583,7 +583,7 @@ namespace Glamaholic.Ui {
 
                         circleCentre = drawCursor + new Vector2(iconSize, 16 + paddingSize / 2f);
                         if (mirage.Stain2 != 0) {
-                            var stain = Plugin.DataManager.GetExcelSheet<Stain>()!.GetRow(mirage.Stain2);
+                            var stain = Service.DataManager.GetExcelSheet<Stain>()!.GetRow(mirage.Stain2);
                             if (stain != null) {
                                 var colour = stain.Color;
                                 var abgr = 0xFF000000;
@@ -635,7 +635,7 @@ namespace Glamaholic.Ui {
             }
 
             if (this._editing && ImGui.IsItemClicked(ImGuiMouseButton.Right) && mirage != null) {
-                var itemData = Plugin.DataManager.GetExcelSheet<Item>()!.GetRow(mirage.ItemId);
+                var itemData = Service.DataManager.GetExcelSheet<Item>()!.GetRow(mirage.ItemId);
                 var dyeable = itemData != null && itemData.DyeCount != 0;
                 if (dyeable) {
                     _editingItemDyeCount = itemData!.DyeCount;
@@ -644,7 +644,7 @@ namespace Glamaholic.Ui {
             }
 
             if (mirage != null && mirage.ItemId != 0 && Util.IsItemMiddleOrCtrlClicked()) {
-                var item = Plugin.DataManager.GetExcelSheet<Item>()!.GetRow(mirage.ItemId);
+                var item = Service.DataManager.GetExcelSheet<Item>()!.GetRow(mirage.ItemId);
                 if (item != null) {
                     this.Ui.AlternativeFinders.Add(new AlternativeFinder(this.Ui, item));
                 }
@@ -682,7 +682,7 @@ namespace Glamaholic.Ui {
 
             ImGui.TableNextColumn();
             if (Util.IconButton(FontAwesomeIcon.Check, tooltip: "Apply")) {
-                if (!Util.IsEditingPlate(this.Ui.Plugin.GameGui)) {
+                if (!Util.IsEditingPlate(Service.GameGui)) {
                     this.AddTimedMessage("The in-game plate editor must be open.");
                 } else {
                     this.Ui.Plugin.Functions.LoadPlate(plate);
@@ -938,7 +938,7 @@ namespace Glamaholic.Ui {
 
             IEnumerable<Item> items;
             if (GameFunctions.DresserContents.Count > 0 && this.Ui.Plugin.Config.ItemFilterShowObtainedOnly) {
-                var sheet = Plugin.DataManager.GetExcelSheet<Item>()!;
+                var sheet = Service.DataManager.GetExcelSheet<Item>()!;
                 items = GameFunctions.DresserContents
                     .Select(item => sheet.GetRow(item.ItemId))
                     .Where(item => item != null)
@@ -974,8 +974,8 @@ namespace Glamaholic.Ui {
         }
 
         private string ConvertToText(SavedPlate plate) {
-            var itemSheet = Plugin.DataManager.GetExcelSheet<Item>()!;
-            var stainSheet = Plugin.DataManager.GetExcelSheet<Stain>()!;
+            var itemSheet = Service.DataManager.GetExcelSheet<Item>()!;
+            var stainSheet = Service.DataManager.GetExcelSheet<Stain>()!;
 
             StringBuilder sb = new();
             sb.AppendLine(plate.Name);

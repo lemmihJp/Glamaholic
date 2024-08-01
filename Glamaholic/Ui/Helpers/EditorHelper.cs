@@ -11,11 +11,11 @@ namespace Glamaholic.Ui.Helpers {
         }
 
         internal unsafe void Draw() {
-            if (!this.Ui.Plugin.Config.ShowEditorMenu || !Util.IsEditingPlate(this.Ui.Plugin.GameGui)) {
+            if (!this.Ui.Plugin.Config.ShowEditorMenu || !Util.IsEditingPlate(Service.GameGui)) {
                 return;
             }
 
-            var addon = (AtkUnitBase*) this.Ui.Plugin.GameGui.GetAddonByName(Util.PlateAddon, 1);
+            var addon = (AtkUnitBase*) Service.GameGui.GetAddonByName(Util.PlateAddon, 1);
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (addon == null || !addon->IsVisible) {
                 return;

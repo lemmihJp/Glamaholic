@@ -8,13 +8,13 @@ namespace Glamaholic {
         internal Commands(Plugin plugin) {
             this.Plugin = plugin;
 
-            this.Plugin.CommandManager.AddHandler("/glamaholic", new CommandInfo(this.OnCommand) {
+            Service.CommandManager.AddHandler("/glamaholic", new CommandInfo(this.OnCommand) {
                 HelpMessage = $"Toggle visibility of the {Plugin.Name} window",
             });
         }
 
         public void Dispose() {
-            this.Plugin.CommandManager.RemoveHandler("/glamaholic");
+            Service.CommandManager.RemoveHandler("/glamaholic");
         }
 
         private void OnCommand(string command, string arguments) {

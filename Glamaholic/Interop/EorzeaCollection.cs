@@ -19,12 +19,12 @@ namespace Glamaholic.Interop {
         public static async Task<SavedPlate?> ImportFromURL(string userFacingURL) {
             string? url = ConvertURLForAPI(userFacingURL);
             if (url == null) {
-                Plugin.Log.Error($"EorzeaCollection Import: Invalid URL '{userFacingURL}'");
+                Service.Log.Error($"EorzeaCollection Import: Invalid URL '{userFacingURL}'");
                 return null;
             }
 
-            var itemSheet = Plugin.DataManager.GetExcelSheet<Item>(ClientLanguage.English)!;
-            var stainSheet = Plugin.DataManager.GetExcelSheet<Stain>(ClientLanguage.English)!;
+            var itemSheet = Service.DataManager.GetExcelSheet<Item>(ClientLanguage.English)!;
+            var stainSheet = Service.DataManager.GetExcelSheet<Stain>(ClientLanguage.English)!;
 
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Add("User-Agent", USER_AGENT);
@@ -33,11 +33,11 @@ namespace Glamaholic.Interop {
             try {
                 resp = await httpClient.GetAsync(url);
                 if (!resp.IsSuccessStatusCode) {
-                    Plugin.Log.Warning($"EorzeaCollection Import returned status code {resp.StatusCode}:\n{await resp.Content.ReadAsStringAsync()}");
+                    Service.Log.Warning($"EorzeaCollection Import returned status code {resp.StatusCode}:\n{await resp.Content.ReadAsStringAsync()}");
                     return null;
                 }
             } catch (Exception e) {
-                Plugin.Log.Warning(e, $"EorzeaCollection Import: Request failed with Exception");
+                Service.Log.Warning(e, $"EorzeaCollection Import: Request failed with Exception");
                 return null;
             }
 
@@ -68,7 +68,7 @@ namespace Glamaholic.Interop {
 
                     var item = itemSheet.FirstOrDefault(i => i?.Name.ToString().ToLower() == name, null);
                     if (item == null) {
-                        Plugin.Log.Warning($"EorzeaCollection Import: Item '{name}' not found in Item sheet");
+                        Service.Log.Warning($"EorzeaCollection Import: Item '{name}' not found in Item sheet");
                         continue;
                     }
 
@@ -85,7 +85,7 @@ namespace Glamaholic.Interop {
                         if (stain != null) {
                             stain1 = (byte) stain.RowId;
                         } else
-                            Plugin.Log.Warning($"EorzeaCollection Import: Stain '{dyes[0]}' not found in Stain sheet");
+                            Service.Log.Warning($"EorzeaCollection Import: Stain '{dyes[0]}' not found in Stain sheet");
                     }
 
                     if (dyes.Length > 1 && dyes[1] != "none") {
@@ -94,7 +94,7 @@ namespace Glamaholic.Interop {
                         if (stain != null) {
                             stain2 = (byte) stain.RowId;
                         } else
-                            Plugin.Log.Warning($"EorzeaCollection Import: Stain '{dyes[1]}' not found in Stain sheet");
+                            Service.Log.Warning($"EorzeaCollection Import: Stain '{dyes[1]}' not found in Stain sheet");
                     }
 
                     plate.Items.Add(plateSlot.Value, new SavedGlamourItem() { ItemId = item.RowId, Stain1 = stain1, Stain2 = stain2 });
@@ -102,7 +102,7 @@ namespace Glamaholic.Interop {
 
                 return plate;
             } catch (Exception e) {
-                Plugin.Log.Warning($"EorzeaCollection Import: Failed to parse response: {e.Message}");
+                Service.Log.Warning($"EorzeaCollection Import: Failed to parse response: {e.Message}");
                 return null;
             }
         }
@@ -154,7 +154,7 @@ namespace Glamaholic.Interop {
                 case "right_ring":
                     return PlateSlot.RightRing;
                 default:
-                    Plugin.Log.Warning($"EorzeaCollection Import: Unknown slot '{slot}'");
+                    Service.Log.Warning($"EorzeaCollection Import: Unknown slot '{slot}'");
                     return null;
             }
         }

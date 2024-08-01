@@ -54,7 +54,7 @@ namespace Glamaholic {
 
             CreateBackup(fileInfo);
 
-            Plugin.Log.Info($"Migrating configuration from version {version} to {CURRENT_VERSION}");
+            Service.Log.Info($"Migrating configuration from version {version} to {CURRENT_VERSION}");
 
             for (int newVersion = version + 1; newVersion <= CURRENT_VERSION; newVersion++) {
                 switch (newVersion) {

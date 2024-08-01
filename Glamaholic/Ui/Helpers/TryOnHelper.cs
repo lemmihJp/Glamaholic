@@ -21,13 +21,13 @@ namespace Glamaholic.Ui.Helpers {
                 return;
             }
 
-            var tryOnAddon = (AtkUnitBase*) this.Ui.Plugin.GameGui.GetAddonByName("Tryon", 1);
+            var tryOnAddon = (AtkUnitBase*) Service.GameGui.GetAddonByName("Tryon", 1);
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (tryOnAddon == null || !tryOnAddon->IsVisible) {
                 return;
             }
 
-            var right = this.Ui.Plugin.Interface.InstalledPlugins.Any(state => state.InternalName == "ItemSearchPlugin");
+            var right = Service.Interface.InstalledPlugins.Any(state => state.InternalName == "ItemSearchPlugin");
             HelperUtil.DrawHelper(tryOnAddon, "glamaholic-helper-try-on", right, this.DrawDropdown);
         }
 

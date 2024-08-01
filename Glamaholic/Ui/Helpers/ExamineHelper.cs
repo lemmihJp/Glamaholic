@@ -17,7 +17,7 @@ namespace Glamaholic.Ui.Helpers {
                 return;
             }
 
-            var examineAddon = (AtkUnitBase*) this.Ui.Plugin.GameGui.GetAddonByName("CharacterInspect", 1);
+            var examineAddon = (AtkUnitBase*) Service.GameGui.GetAddonByName("CharacterInspect", 1);
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (examineAddon == null || !examineAddon->IsVisible) {
                 return;

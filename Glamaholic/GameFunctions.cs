@@ -72,15 +72,15 @@ namespace Glamaholic {
 
         internal GameFunctions(Plugin plugin) {
             this.Plugin = plugin;
-            this.Plugin.GameInteropProvider.InitializeFromAttributes(this);
+            Service.GameInteropProvider.InitializeFromAttributes(this);
 
-            Plugin.ChatGui.ChatMessage += this.OnChat;
-            this.Plugin.Framework.Update += OnFrameworkUpdate;
+            Service.ChatGui.ChatMessage += this.OnChat;
+            Service.Framework.Update += OnFrameworkUpdate;
         }
 
         public void Dispose() {
-            Plugin.ChatGui.ChatMessage -= this.OnChat;
-            this.Plugin.Framework.Update -= OnFrameworkUpdate;
+            Service.ChatGui.ChatMessage -= this.OnChat;
+            Service.Framework.Update -= OnFrameworkUpdate;
         }
 
         private void OnChat(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled) {
@@ -182,7 +182,7 @@ namespace Glamaholic {
         }
 
         internal unsafe bool IsInArmoire(uint itemId) {
-            var row = Plugin.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Cabinet>()!.FirstOrDefault(row => row.Item.Row == itemId);
+            var row = Service.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Cabinet>()!.FirstOrDefault(row => row.Item.Row == itemId);
             if (row == null) {
                 return false;
             }
@@ -191,7 +191,7 @@ namespace Glamaholic {
         }
 
         internal unsafe uint? ArmoireIndexIfPresent(uint itemId) {
-            var row = Plugin.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Cabinet>()!.FirstOrDefault(row => row.Item.Row == itemId);
+            var row = Service.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Cabinet>()!.FirstOrDefault(row => row.Item.Row == itemId);
             if (row == null) {
                 return null;
             }
@@ -336,7 +336,7 @@ namespace Glamaholic {
 
         private unsafe InventoryItem* SelectStainItem(byte stainId, Dictionary<(uint, uint), uint> usedStains, out uint bestItemId) {
             var inventory = InventoryManager.Instance();
-            var transient = Plugin.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.StainTransient>()!.GetRow(stainId);
+            var transient = Service.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.StainTransient>()!.GetRow(stainId);
 
             InventoryItem* item = null;
 
