@@ -36,8 +36,6 @@ namespace Glamaholic.Interop {
                         continue;
                     }
 
-                    Service.Log.Info($"{slot} -> {ConvertSlot(slot)}");
-
                     _SetItem.Invoke(playerIndex, ConvertSlot(slot), item.ItemId, [item.Stain1, item.Stain2]);
                 }
             } catch (Exception) { }
