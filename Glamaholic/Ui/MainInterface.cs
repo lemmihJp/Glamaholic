@@ -236,6 +236,7 @@ namespace Glamaholic.Ui {
 
                 switch (target) {
                     case ECImportTarget.NewPlate:
+                        import.Tags.Add("Eorzea Collection");
                         this.Ui.Plugin.Config.AddPlate(import);
                         this.Ui.Plugin.SaveConfig();
                         this.SwitchPlate(this.Ui.Plugin.Config.Plates.Count - 1, true);
