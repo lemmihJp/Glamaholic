@@ -67,4 +67,8 @@
       <None Include=".editorconfig" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\thirdparty\Glamourer.Api\Glamourer.Api.csproj" />
+    </ItemGroup>
+
 </Project>
