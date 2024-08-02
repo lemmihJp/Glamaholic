@@ -247,7 +247,9 @@ namespace Glamaholic.Ui {
                 this._ecImporting = false;
 
                 if (import == null) {
-                    this._massImportMessage = $"Import failed.. copy a new link to try again";
+                    if (this._massImport)
+                        this._massImportMessage = $"Import failed.. copy a new link to try again";
+
                     return;
                 }
 
