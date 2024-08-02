@@ -1029,8 +1029,7 @@ namespace Glamaholic.Ui {
             ImGui.Separator();
 
             {
-                ImGui.TextUnformatted("Target: ");
-                ImGui.SameLine();
+                ImGui.TextUnformatted("Target:");
                 ImGui.RadioButton("New Plate", ref this._massImportTarget, 0); ImGui.SameLine();
                 ImGui.RadioButton("Try On", ref this._massImportTarget, 1);
 
@@ -1056,6 +1055,11 @@ namespace Glamaholic.Ui {
                 ImGui.TextUnformatted("Importing...");
             else
                 ImGui.TextUnformatted(_massImportMessage);
+
+            ImGui.SetCursorPosY(ImGui.GetWindowHeight() - ImGui.GetFrameHeightWithSpacing() - ImGui.GetStyle().ItemSpacing.Y);
+            if (ImGui.Button("Close")) {
+                this._massImport = false;
+            }
         }
 
         private void HandleTimers() {
