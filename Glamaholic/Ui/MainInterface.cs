@@ -60,6 +60,10 @@ namespace Glamaholic.Ui {
         private string _tagInput = string.Empty;
         private int _editingItemDyeCount = 0;
         private DateTime _dyesCopiedTime = DateTime.MinValue;
+        private bool _massImport = false;
+        private string _massImportLastURL = string.Empty;
+        private string _massImportMessage = string.Empty;
+        private int _massImportTarget = 0;
 
         internal MainInterface(PluginUi ui) {
             this.Ui = ui;
@@ -86,6 +90,9 @@ namespace Glamaholic.Ui {
 
         internal void Draw() {
             this.HandleTimers();
+
+            if (this._massImport)
+                this.DrawMassImportWindow();
 
             if (!this._visible) {
                 return;
@@ -153,6 +160,12 @@ namespace Glamaholic.Ui {
                         this.ImportEorzeaCollection(Util.GetClipboardText(), ECImportTarget.TryOnGlamourer);
 
                     ImGui.EndMenu();
+                }
+
+                if (ImGui.MenuItem("Mass Import")) {
+                    _massImport = true;
+                    _massImportLastURL = Util.GetClipboardText();
+                    _massImportMessage = "Waiting for URL to be copied...";
                 }
 
                 ImGui.EndMenu();
@@ -235,8 +248,6 @@ namespace Glamaholic.Ui {
                     return;
                 }
 
-                this._ecImporting = false;
-
                 switch (target) {
                     case ECImportTarget.NewPlate:
                         import.Tags.Add("Eorzea Collection");
@@ -251,6 +262,10 @@ namespace Glamaholic.Ui {
                         Interop.Glamourer.TryOn(playerIndex, import);
                         break;
                 }
+
+                this._ecImporting = false;
+                if (this._massImport)
+                    this._massImportMessage = $"Imported {import.Name}";
             });
         }
 
@@ -995,6 +1010,52 @@ namespace Glamaholic.Ui {
             this.DrawPlateDetail();
 
             ImGui.End();
+        }
+
+        private void DrawMassImportWindow() {
+            var displaySize = ImGui.GetIO().DisplaySize;
+            var windowSize = new Vector2(500, 300);
+            var windowPos = (displaySize - windowSize) / 2;
+
+            ImGui.SetNextWindowPos(windowPos, ImGuiCond.Appearing);
+            ImGui.SetNextWindowSize(windowSize, ImGuiCond.Appearing);
+
+            if (!ImGui.Begin("Mass Import", ref this._massImport)) {
+                ImGui.End();
+                return;
+            }
+
+            ImGui.TextUnformatted("Eorzea Collection Mass Import");
+            ImGui.Separator();
+
+            {
+                ImGui.TextUnformatted("Target: ");
+                ImGui.SameLine();
+                ImGui.RadioButton("New Plate", ref this._massImportTarget, 0); ImGui.SameLine();
+                ImGui.RadioButton("Try On", ref this._massImportTarget, 1);
+
+                if (Interop.Glamourer.IsAvailable()) {
+                    ImGui.SameLine();
+                    ImGui.RadioButton("Try On (Glamourer)", ref this._massImportTarget, 2);
+                }
+            }
+
+            var target = (ECImportTarget) this._massImportTarget;
+
+            if (!this._ecImporting) {
+                var clipboard = Util.GetClipboardText().Trim();
+                if (clipboard != _massImportLastURL && IsValidEorzeaCollectionUrl(clipboard)) {
+                    _massImportLastURL = clipboard;
+                    _massImportMessage = "Importing...";
+                    ImportEorzeaCollection(clipboard, target);
+                }
+            }
+
+            ImGui.NewLine();
+            if (this._ecImporting)
+                ImGui.TextUnformatted("Importing...");
+            else
+                ImGui.TextUnformatted(_massImportMessage);
         }
 
         private void HandleTimers() {
