@@ -149,7 +149,7 @@ namespace Glamaholic.Ui {
 
             if (ImGui.BeginMenu("Eorzea Collection")) {
                 var validUrl = IsValidEorzeaCollectionUrl(Util.GetClipboardText());
-                if (ImGui.BeginMenu("Import from URL", validUrl) && !this._ecImporting) {
+                if (ImGui.BeginMenu("Import from URL", validUrl && !this._ecImporting)) {
                     if (ImGui.MenuItem("New Plate"))
                         this.ImportEorzeaCollection(Util.GetClipboardText(), ECImportTarget.NewPlate);
 
@@ -1053,6 +1053,9 @@ namespace Glamaholic.Ui {
                     ImportEorzeaCollection(clipboard, target);
                 }
             }
+
+            ImGui.NewLine();
+            ImGui.TextUnformatted("Copy an Eorzea Collection URL to import it.");
 
             ImGui.NewLine();
             if (this._ecImporting)
