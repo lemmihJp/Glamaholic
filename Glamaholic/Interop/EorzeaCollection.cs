@@ -41,8 +41,10 @@ namespace Glamaholic.Interop {
                 return null;
             }
 
-            if (resp == null)
+            if (resp == null) {
+                Service.Log.Warning($"EorzeaCollection Import: Request failed with no response");
                 return null;
+            }
 
             try {
                 var glam = JsonConvert.DeserializeObject<Glamour>(await resp.Content.ReadAsStringAsync());

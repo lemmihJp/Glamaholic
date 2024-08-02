@@ -243,10 +243,16 @@ namespace Glamaholic.Ui {
 
             Task.Run(async () => {
                 var import = await EorzeaCollection.ImportFromURL(url);
+
+                this._ecImporting = false;
+
                 if (import == null) {
-                    this._ecImporting = false;
+                    this._massImportMessage = $"Import failed.. copy a new link to try again";
                     return;
                 }
+
+                if (this._massImport)
+                    this._massImportMessage = $"Imported {import.Name}";
 
                 switch (target) {
                     case ECImportTarget.NewPlate:
@@ -262,10 +268,6 @@ namespace Glamaholic.Ui {
                         Interop.Glamourer.TryOn(playerIndex, import);
                         break;
                 }
-
-                this._ecImporting = false;
-                if (this._massImport)
-                    this._massImportMessage = $"Imported {import.Name}";
             });
         }
 
