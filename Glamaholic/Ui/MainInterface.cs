@@ -215,11 +215,13 @@ namespace Glamaholic.Ui {
         }
 
         private void ImportEorzeaCollection(string url, ECImportTarget target) {
-            if (!IsValidEorzeaCollectionUrl(url)) {
+            if (!IsValidEorzeaCollectionUrl(url) || Service.ClientState.LocalPlayer == null) {
                 return;
             }
 
             this._ecImporting = true;
+
+            int playerIndex = Service.ClientState.LocalPlayer.ObjectIndex;
 
             Task.Run(async () => {
                 var import = await EorzeaCollection.ImportFromURL(url);
@@ -237,7 +239,7 @@ namespace Glamaholic.Ui {
                         this.SwitchPlate(this.Ui.Plugin.Config.Plates.Count - 1, true);
                         break;
                     case ECImportTarget.TryOnGlamourer:
-                        Interop.Glamourer.TryOn(import);
+                        Interop.Glamourer.TryOn(playerIndex, import);
                         break;
                 }
             });
@@ -864,8 +866,8 @@ namespace Glamaholic.Ui {
                 ImGui.TextUnformatted("Glamourer");
                 ImGui.Separator();
 
-                if (ImGui.Button("Try On"))
-                    Interop.Glamourer.TryOn(plate);
+                if (ImGui.Button("Try On") && Service.ClientState.LocalPlayer != null)
+                    Interop.Glamourer.TryOn(Service.ClientState.LocalPlayer!.ObjectIndex, plate);
             }
 
             ImGui.NewLine();

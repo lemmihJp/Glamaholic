@@ -11,33 +11,29 @@ namespace Glamaholic.Interop {
         private static bool Initialized { get; set; } = false;
         private static bool Available { get; set; } = false;
 
-        public static void TryOn(SavedPlate plate) {
+        public static void TryOn(int playerIndex, SavedPlate plate) {
             if (!IsAvailable())
                 return;
 
             try {
-                var player = Service.ClientState.LocalPlayer;
-                if (player == null)
-                    return;
+                Service.Framework.Run(() => {
+                    _RevertState.Invoke(playerIndex, flags: ApplyFlag.Equipment);
 
-                ushort playerIndex = player.ObjectIndex;
+                    foreach (var slot in Enum.GetValues<PlateSlot>()) {
+                        if (!plate.Items.TryGetValue(slot, out var item)) {
+                            if (!plate.FillWithNewEmperor)
+                                continue;
 
-                _RevertState.Invoke(playerIndex, flags: ApplyFlag.Equipment);
+                            uint empItem = Util.GetEmperorItemForSlot(slot);
+                            if (empItem != 0)
+                                _SetItem.Invoke(playerIndex, ConvertSlot(slot), empItem, [0, 0]);
 
-                foreach (var slot in Enum.GetValues<PlateSlot>()) {
-                    if (!plate.Items.TryGetValue(slot, out var item)) {
-                        if (!plate.FillWithNewEmperor)
                             continue;
+                        }
 
-                        uint empItem = Util.GetEmperorItemForSlot(slot);
-                        if (empItem != 0)
-                            _SetItem.Invoke(playerIndex, ConvertSlot(slot), empItem, [0, 0]);
-
-                        continue;
+                        _SetItem.Invoke(playerIndex, ConvertSlot(slot), item.ItemId, [item.Stain1, item.Stain2]);
                     }
-
-                    _SetItem.Invoke(playerIndex, ConvertSlot(slot), item.ItemId, [item.Stain1, item.Stain2]);
-                }
+                });
             } catch (Exception) { }
         }
 
