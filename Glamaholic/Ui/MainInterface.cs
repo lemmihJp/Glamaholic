@@ -861,6 +861,43 @@ namespace Glamaholic.Ui {
             ImGui.TextUnformatted(plate.Name);
             ImGui.Separator();
 
+            DrawDyeListLabel(plate);
+
+            ImGui.NewLine();
+            ImGui.TextUnformatted("Customize");
+            ImGui.Separator();
+
+            bool fillSlots = ImGui.Button("Fill Empty Slots with New Emperor");
+            if (ImGui.IsItemHovered())
+                ImGui.SetTooltip("Fills empty slots with the New Emperor set.");
+
+            if (fillSlots)
+                this.FillEmptySlots(plate);
+
+            if (Interop.Glamourer.IsAvailable()) {
+                ImGui.NewLine();
+                ImGui.TextUnformatted("Glamourer");
+                ImGui.Separator();
+
+                if (ImGui.Button("Try On"))
+                    Interop.Glamourer.TryOn(plate);
+            }
+
+            ImGui.NewLine();
+            ImGui.TextUnformatted("Settings");
+            ImGui.Separator();
+
+            bool newEmperor = plate.FillWithNewEmperor;
+            if (ImGui.Checkbox("Fill empty slots with New Emperor for Try on & Apply", ref newEmperor)) {
+                plate.FillWithNewEmperor = newEmperor;
+                this.Ui.Plugin.SaveConfig();
+            }
+
+            if (ImGui.IsItemHovered())
+                ImGui.SetTooltip("Does not modify the glamour itself!\n\nIf enabled, empty slots will be filled with the New Emperor set when tried on or applied to plates.");
+        }
+
+        private void DrawDyeListLabel(SavedPlate plate) {
             bool showDyes = false;
             bool copyDyes = false;
             Util.TextIcon(FontAwesomeIcon.Mouse);
@@ -910,39 +947,6 @@ namespace Glamaholic.Ui {
                     _dyesCopiedTime = DateTime.Now;
                 }
             }
-
-            ImGui.NewLine();
-            ImGui.TextUnformatted("Customize");
-            ImGui.Separator();
-
-            bool fillSlots = ImGui.Button("Fill Empty Slots with New Emperor");
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("Fills empty slots with the New Emperor set.");
-
-            if (fillSlots)
-                this.FillEmptySlots(plate);
-
-            if (Interop.Glamourer.IsAvailable()) {
-                ImGui.NewLine();
-                ImGui.TextUnformatted("Glamourer");
-                ImGui.Separator();
-
-                if (ImGui.Button("Try On"))
-                    Interop.Glamourer.TryOn(plate);
-            }
-
-            ImGui.NewLine();
-            ImGui.TextUnformatted("Settings");
-            ImGui.Separator();
-
-            bool newEmperor = plate.FillWithNewEmperor;
-            if (ImGui.Checkbox("Fill empty slots with New Emperor for Try on & Apply", ref newEmperor)) {
-                plate.FillWithNewEmperor = newEmperor;
-                this.Ui.Plugin.SaveConfig();
-            }
-
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("Does not modify the glamour itself!\n\nIf enabled, empty slots will be filled with the New Emperor set when tried on or applied to plates.");
         }
 
         private void DrawWarnings() {
