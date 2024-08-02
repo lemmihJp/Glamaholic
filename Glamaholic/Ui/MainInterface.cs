@@ -59,6 +59,7 @@ namespace Glamaholic.Ui {
         private readonly Dictionary<string, Stopwatch> _timedMessages = new();
         private string _tagInput = string.Empty;
         private int _editingItemDyeCount = 0;
+        private DateTime _dyesCopiedTime = DateTime.MinValue;
 
         internal MainInterface(PluginUi ui) {
             this.Ui = ui;
@@ -812,7 +813,7 @@ namespace Glamaholic.Ui {
 
                 {
                     ImGui.BeginGroup();
-                    this.DrawPlateSettings(plate);
+                    this.DrawRightPanel(plate);
                     ImGui.EndGroup();
                 }
 
@@ -856,7 +857,61 @@ namespace Glamaholic.Ui {
             ImGui.EndChild();
         }
 
-        private void DrawPlateSettings(SavedPlate plate) {
+        private void DrawRightPanel(SavedPlate plate) {
+            ImGui.TextUnformatted(plate.Name);
+            ImGui.Separator();
+
+            bool showDyes = false;
+            bool copyDyes = false;
+            Util.TextIcon(FontAwesomeIcon.Mouse);
+            showDyes |= ImGui.IsItemHovered();
+            copyDyes |= ImGui.IsItemClicked(ImGuiMouseButton.Left);
+
+            ImGui.SameLine();
+
+            ImGui.TextUnformatted("Hover to view dyes (click to copy)");
+            showDyes |= ImGui.IsItemHovered();
+            copyDyes |= ImGui.IsItemClicked(ImGuiMouseButton.Left);
+
+            if (showDyes) {
+                Dictionary<byte, int> dyes = [];
+                foreach (var (_, item) in plate.Items) {
+                    if (item.Stain1 != 0)
+                        dyes[item.Stain1] = (dyes.ContainsKey(item.Stain1) ? dyes[item.Stain1] : 0) + 1;
+
+                    if (item.Stain2 != 0)
+                        dyes[item.Stain2] = (dyes.ContainsKey(item.Stain2) ? dyes[item.Stain2] : 0) + 1;
+                }
+
+                StringBuilder export = new();
+
+                ImGui.BeginTooltip();
+
+                foreach (var (dye, count) in dyes.OrderBy(kvp => kvp.Key)) {
+                    var stain = Service.DataManager.GetExcelSheet<Stain>()!.GetRow(dye);
+                    if (stain != null) {
+                        string line = $"{count}x {stain.Name}";
+                        ImGui.TextUnformatted(line);
+
+                        if (copyDyes)
+                            export.AppendLine(line);
+                    }
+                }
+
+                if (copyDyes || DateTime.Now.Subtract(_dyesCopiedTime).TotalSeconds < 1.5) {
+                    ImGui.NewLine();
+                    ImGui.TextUnformatted("Copied to clipboard!");
+                }
+
+                ImGui.EndTooltip();
+
+                if (copyDyes) {
+                    ImGui.SetClipboardText(export.ToString().Substring(0, export.Length - 2));
+                    _dyesCopiedTime = DateTime.Now;
+                }
+            }
+
+            ImGui.NewLine();
             ImGui.TextUnformatted("Customize");
             ImGui.Separator();
 
