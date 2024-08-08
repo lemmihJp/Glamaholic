@@ -51,7 +51,7 @@ namespace Glamaholic {
         private readonly FunctionDelegates.SetGlamourPlateSlotStainsDelegate SetGlamourPlateSlotStainsNative = null!;
 
         /* 
-         * Returns the cabinet id for an item in the Armoire or 0xFFFFFFFFi64 if not found.
+         * Returns the cabinet id for an item in the Armoire or -1 if not found.
          * 
          * _this should always be UIState::Cabinet
          * 
@@ -190,18 +190,6 @@ namespace Glamaholic {
             return this.Armoire->IsItemInCabinet((int) row.RowId);
         }
 
-        internal unsafe uint? ArmoireIndexIfPresent(uint itemId) {
-            var row = Service.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Cabinet>()!.FirstOrDefault(row => row.Item.Row == itemId);
-            if (row == null) {
-                return null;
-            }
-
-            var isInArmoire = this.Armoire->IsItemInCabinet((int) row.RowId);
-            return isInArmoire
-                ? row.RowId
-                : null;
-        }
-
         internal unsafe void LoadPlate(SavedPlate plate) {
             Plugin.LogTroubleshooting("Begin LoadPlate()");
 
@@ -267,11 +255,12 @@ namespace Glamaholic {
                 var matchingIds = dresser.FindAll(mirage => (mirage.ItemId % Util.ItemModifierMod) == item.ItemId);
                 Plugin.LogTroubleshooting($"Dresser has {matchingIds.Count} items matching {item.ItemId}");
 
+
+
                 if (matchingIds.Count == 0) {
-                    // if not in the glamour dresser, look in the armoire
-                    if (this.ArmoireIndexIfPresent(item.ItemId) is { } armoireIdx) {
+                    int cabinetId = GetCabinetItemId(&UIState.Instance()->Cabinet, item.ItemId);
+                    if (cabinetId != -1 && this.Armoire->IsItemInCabinet(cabinetId)) {
                         source = MirageSource.Armoire;
-                        int cabinetId = GetCabinetItemId(&UIState.Instance()->Cabinet, item.ItemId);
 
                         info = (cabinetId, item.ItemId, 0, 0);
 
