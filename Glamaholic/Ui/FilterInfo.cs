@@ -1,6 +1,7 @@
 ﻿using Dalamud.Game;
 using Dalamud.Plugin.Services;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
+using Lumina.Extensions;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -63,9 +64,9 @@ namespace Glamaholic.Ui {
 
                 if (word.StartsWith("j:")) {
                     var abbr = word[2..].ToLowerInvariant();
-                    var job = this.Data.GetExcelSheet<ClassJob>()!.FirstOrDefault(row => row.Abbreviation.RawString.ToLowerInvariant() == abbr);
+                    var job = this.Data.GetExcelSheet<ClassJob>()!.FirstOrNull(row => row.Abbreviation.ExtractText().ToLowerInvariant() == abbr);
                     if (job != null) {
-                        this.WantedJobs.Add(job);
+                        this.WantedJobs.Add(job.Value);
                     }
 
                     continue;
@@ -182,10 +183,10 @@ namespace Glamaholic.Ui {
                 var sheet = this.Data.GetExcelSheet<Item>()!;
 
                 var names = plate.Items.Values
-                    .Select(mirage => sheet.GetRow(mirage.ItemId % Util.HqItemOffset))
+                    .Select(mirage => sheet.GetRowOrDefault(mirage.ItemId % Util.HqItemOffset))
                     .Where(item => item != null)
                     .Cast<Item>()
-                    .Select(item => item.Name.RawString.ToLowerInvariant())
+                    .Select(item => item.Name.ExtractText().ToLowerInvariant())
                     .ToArray();
 
                 foreach (var needle in this.ItemNames) {
@@ -197,8 +198,7 @@ namespace Glamaholic.Ui {
             }
 
             foreach (var mirage in plate.Items.Values) {
-                var item = this.Data.GetExcelSheet<Item>()!.GetRow(mirage.ItemId % Util.HqItemOffset);
-                if (item == null) {
+                if (this.Data.GetExcelSheet<Item>()!.TryGetRow(mirage.ItemId % Util.HqItemOffset, out var item)) {
                     continue;
                 }
 
@@ -207,12 +207,12 @@ namespace Glamaholic.Ui {
                 }
 
                 foreach (var job in this.WantedJobs) {
-                    var category = item.ClassJobCategory.Value;
+                    var category = item.ClassJobCategory.ValueNullable;
                     if (category == null) {
                         continue;
                     }
 
-                    if (!this.CanWear(category, job)) {
+                    if (!this.CanWear(category.Value, job)) {
                         return false;
                     }
                 }
@@ -224,7 +224,7 @@ namespace Glamaholic.Ui {
         private bool CanWear(ClassJobCategory category, ClassJob classJob) {
             // get english version
             var job = this.Data.GetExcelSheet<ClassJob>(ClientLanguage.English)!.GetRow(classJob.RowId)!;
-            var getter = category.GetType().GetProperty(job.Abbreviation.RawString, BindingFlags.Public | BindingFlags.Instance);
+            var getter = category.GetType().GetProperty(job.Abbreviation.ExtractText(), BindingFlags.Public | BindingFlags.Instance);
             if (getter == null) {
                 return false;
             }

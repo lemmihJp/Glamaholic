@@ -1,9 +1,9 @@
 ﻿using Dalamud.Game;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
+using Lumina.Extensions;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -68,38 +68,38 @@ namespace Glamaholic.Interop {
                     if (name.Length == 0)
                         continue;
 
-                    var item = itemSheet.FirstOrDefault(i => i?.Name.ToString().ToLower() == name, null);
+                    var item = itemSheet.FirstOrNull(i => i.Name.ExtractText().ToLower() == name);
                     if (item == null) {
                         Service.Log.Warning($"EorzeaCollection Import: Item '{name}' not found in Item sheet");
                         continue;
                     }
 
                     if (dyes == null) {
-                        plate.Items.Add(plateSlot.Value, new SavedGlamourItem() { ItemId = item.RowId });
+                        plate.Items.Add(plateSlot.Value, new SavedGlamourItem() { ItemId = item.Value.RowId });
                         continue;
                     }
 
                     byte stain1, stain2 = stain1 = 0;
 
                     if (dyes[0] != "none") {
-                        var stain = stainSheet.FirstOrDefault(s => s?.Name.ToString().ToLower() == dyes[0], null);
+                        var stain = stainSheet.FirstOrNull(s => s.Name.ExtractText().ToLower() == dyes[0]);
 
                         if (stain != null) {
-                            stain1 = (byte) stain.RowId;
+                            stain1 = (byte) stain.Value.RowId;
                         } else
                             Service.Log.Warning($"EorzeaCollection Import: Stain '{dyes[0]}' not found in Stain sheet");
                     }
 
                     if (dyes.Length > 1 && dyes[1] != "none") {
-                        var stain = stainSheet.FirstOrDefault(s => s?.Name.ToString().ToLower() == dyes[1], null);
+                        var stain = stainSheet.FirstOrNull(s => s.Name.ExtractText().ToLower() == dyes[1]);
 
                         if (stain != null) {
-                            stain2 = (byte) stain.RowId;
+                            stain2 = (byte) stain.Value.RowId;
                         } else
                             Service.Log.Warning($"EorzeaCollection Import: Stain '{dyes[1]}' not found in Stain sheet");
                     }
 
-                    plate.Items.Add(plateSlot.Value, new SavedGlamourItem() { ItemId = item.RowId, Stain1 = stain1, Stain2 = stain2 });
+                    plate.Items.Add(plateSlot.Value, new SavedGlamourItem() { ItemId = item.Value.RowId, Stain1 = stain1, Stain2 = stain2 });
                 } // end foreach in gear
 
                 return plate;

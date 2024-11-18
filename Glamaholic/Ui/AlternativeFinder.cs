@@ -3,7 +3,7 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Interface;
 using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -24,7 +24,7 @@ namespace Glamaholic.Ui {
             var info = ModelInfo(item.ModelMain);
 
             foreach (var row in Service.DataManager.GetExcelSheet<Item>()!) {
-                if (Util.IsItemSkipped(row) || row.EquipSlotCategory.Row != this.Item.EquipSlotCategory.Row || info != ModelInfo(row.ModelMain)) {
+                if (Util.IsItemSkipped(row) || row.EquipSlotCategory.RowId != this.Item.EquipSlotCategory.RowId || info != ModelInfo(row.ModelMain)) {
                     continue;
                 }
 
@@ -94,7 +94,7 @@ namespace Glamaholic.Ui {
                 }
 
                 ImGui.SameLine();
-                ImGui.TextUnformatted(alt.Name);
+                ImGui.TextUnformatted(alt.Name.ExtractText());
             }
 
             ImGui.EndChild();
@@ -126,7 +126,7 @@ namespace Glamaholic.Ui {
                 new UIForegroundPayload(0),
                 new UIGlowPayload(0),
             };
-            payloadList.AddRange(SeString.Parse(item.Name.RawData).Payloads);
+            payloadList.AddRange(SeString.Parse(item.Name).Payloads); // TODO review
             payloadList.AddRange(new[] {
                 new RawPayload(new byte[] { 0x02, 0x27, 0x07, 0xCF, 0x01, 0x01, 0x01, 0xFF, 0x01, 0x03 }),
                 new RawPayload(new byte[] { 0x02, 0x13, 0x02, 0xEC, 0x03 }),

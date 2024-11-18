@@ -4,7 +4,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Glamaholic.Interop;
 using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -70,14 +70,14 @@ namespace Glamaholic.Ui {
 
             // get all equippable items that aren't soul crystals
             this.Items = Service.DataManager.GetExcelSheet<Item>(ClientLanguage.English)!
-                .Where(row => row.EquipSlotCategory.Row is not 0 && row.EquipSlotCategory.Value!.SoulCrystal == 0)
+                .Where(row => row.EquipSlotCategory.RowId is not 0 && row.EquipSlotCategory.Value!.SoulCrystal == 0)
                 .ToList();
             this.FilteredItems = this.Items;
 
             this.Stains = Service.DataManager.GetExcelSheet<Stain>(ClientLanguage.English)!
                 .Where(row => row.RowId != 0)
-                .Where(row => !string.IsNullOrWhiteSpace(row.Name.RawString))
-                .ToDictionary(row => row.Name.RawString, row => (byte) row.RowId);
+                .Where(row => !row.Name.IsEmpty)
+                .ToDictionary(row => row.Name.ExtractText(), row => (byte) row.RowId);
         }
 
         internal void Open() {
@@ -421,7 +421,7 @@ namespace Glamaholic.Ui {
                         continue;
                     }
 
-                    if (filter.Length > 0 && !stain.Name.RawString.ToLowerInvariant().Contains(filter)) {
+                    if (filter.Length > 0 && !stain.Name.ExtractText().ToLowerInvariant().Contains(filter)) {
                         continue;
                     }
 
@@ -455,7 +455,7 @@ namespace Glamaholic.Ui {
                             continue;
                         }
 
-                        if (filter.Length > 0 && !stain.Name.RawString.ToLowerInvariant().Contains(filter)) {
+                        if (filter.Length > 0 && !stain.Name.ExtractText().ToLowerInvariant().Contains(filter)) {
                             continue;
                         }
 
@@ -598,8 +598,7 @@ namespace Glamaholic.Ui {
             var cursorAfter = ImGui.GetCursorPos();
 
             if (mirage != null && mirage.ItemId != 0) {
-                var item = Service.DataManager.GetExcelSheet<Item>()!.GetRow(mirage.ItemId);
-                if (item != null) {
+                if (Service.DataManager.GetExcelSheet<Item>()!.TryGetRow(mirage.ItemId, out var item)) {
                     tooltip += $"\n{item.Name}";
 
                     var icon = this.Ui.GetIcon(item.Icon);
@@ -610,8 +609,7 @@ namespace Glamaholic.Ui {
 
                         var circleCentre = drawCursor + new Vector2(iconSize, 4 + paddingSize / 2f);
                         if (mirage.Stain1 != 0) {
-                            var stain = Service.DataManager.GetExcelSheet<Stain>()!.GetRow(mirage.Stain1);
-                            if (stain != null) {
+                            if (Service.DataManager.GetExcelSheet<Stain>()!.TryGetRow(mirage.Stain1, out var stain)) {
                                 var colour = stain.Color;
                                 var abgr = 0xFF000000;
                                 abgr |= (colour & 0xFF) << 16;
@@ -631,8 +629,7 @@ namespace Glamaholic.Ui {
 
                         circleCentre = drawCursor + new Vector2(iconSize, 16 + paddingSize / 2f);
                         if (mirage.Stain2 != 0) {
-                            var stain = Service.DataManager.GetExcelSheet<Stain>()!.GetRow(mirage.Stain2);
-                            if (stain != null) {
+                            if (Service.DataManager.GetExcelSheet<Stain>()!.TryGetRow(mirage.Stain2, out var stain)) {
                                 var colour = stain.Color;
                                 var abgr = 0xFF000000;
                                 abgr |= (colour & 0xFF) << 16;
@@ -683,8 +680,8 @@ namespace Glamaholic.Ui {
             }
 
             if (this._editing && ImGui.IsItemClicked(ImGuiMouseButton.Right) && mirage != null) {
-                var itemData = Service.DataManager.GetExcelSheet<Item>()!.GetRow(mirage.ItemId);
-                var dyeable = itemData != null && itemData.DyeCount != 0;
+                bool ok = Service.DataManager.GetExcelSheet<Item>()!.TryGetRow(mirage.ItemId, out var itemData);
+                var dyeable = ok && itemData.DyeCount != 0;
                 if (dyeable) {
                     _editingItemDyeCount = itemData!.DyeCount;
                     ImGui.OpenPopup(dyePopup);
@@ -692,8 +689,7 @@ namespace Glamaholic.Ui {
             }
 
             if (mirage != null && mirage.ItemId != 0 && Util.IsItemMiddleOrCtrlClicked()) {
-                var item = Service.DataManager.GetExcelSheet<Item>()!.GetRow(mirage.ItemId);
-                if (item != null) {
+                if (Service.DataManager.GetExcelSheet<Item>()!.TryGetRow(mirage.ItemId, out var item)) {
                     this.Ui.AlternativeFinders.Add(new AlternativeFinder(this.Ui, item));
                 }
             }
@@ -946,8 +942,7 @@ namespace Glamaholic.Ui {
                 ImGui.BeginTooltip();
 
                 foreach (var (dye, count) in dyes.OrderBy(kvp => kvp.Key)) {
-                    var stain = Service.DataManager.GetExcelSheet<Stain>()!.GetRow(dye);
-                    if (stain != null) {
+                    if (Service.DataManager.GetExcelSheet<Stain>()!.TryGetRow(dye, out var stain)) {
                         string line = $"{count}x {stain.Name}";
                         ImGui.TextUnformatted(line);
 
@@ -1108,7 +1103,7 @@ namespace Glamaholic.Ui {
             if (GameFunctions.DresserContents.Count > 0 && this.Ui.Plugin.Config.ItemFilterShowObtainedOnly) {
                 var sheet = Service.DataManager.GetExcelSheet<Item>()!;
                 items = GameFunctions.DresserContents
-                    .Select(item => sheet.GetRow(item.ItemId))
+                    .Select(item => sheet.GetRowOrDefault(item.ItemId))
                     .Where(item => item != null)
                     .Cast<Item>();
             } else {
@@ -1118,7 +1113,7 @@ namespace Glamaholic.Ui {
             this.FilteredItems = items
                 .Where(item => !Util.IsItemSkipped(item))
                 .Where(item => Util.MatchesSlot(item.EquipSlotCategory.Value!, slot))
-                .Where(item => this._itemFilter.Length == 0 || item.Name.RawString.ToLowerInvariant().Contains(filter))
+                .Where(item => this._itemFilter.Length == 0 || item.Name.ExtractText().ToLowerInvariant().Contains(filter))
                 .ToList();
         }
 
@@ -1154,8 +1149,7 @@ namespace Glamaholic.Ui {
                 } else {
                     sb.Append(kvp.Key.ToString()).Append(": ");
 
-                    var item = itemSheet.GetRow(kvp.Value.ItemId);
-                    if (item == null) {
+                    if (itemSheet.TryGetRow(kvp.Value.ItemId, out var item)) {
                         sb.AppendLine("Unknown Item");
                     } else {
                         sb.Append(item.Name);
@@ -1168,8 +1162,7 @@ namespace Glamaholic.Ui {
 
                         sb.Append(" (");
                         if (kvp.Value.Stain1 != 0) {
-                            var stain = stainSheet.GetRow(kvp.Value.Stain1);
-                            if (stain == null) {
+                            if (stainSheet.TryGetRow(kvp.Value.Stain1, out var stain)) {
                                 sb.Append("Unknown Stain");
                             } else {
                                 sb.Append(stain.Name);
@@ -1181,8 +1174,7 @@ namespace Glamaholic.Ui {
                             if (kvp.Value.Stain1 != 0)
                                 sb.Append(", ");
 
-                            var stain = stainSheet.GetRow(kvp.Value.Stain2);
-                            if (stain == null) {
+                            if (stainSheet.TryGetRow(kvp.Value.Stain2, out var stain)) {
                                 sb.Append("Unknown Stain");
                             } else {
                                 sb.Append(stain.Name);

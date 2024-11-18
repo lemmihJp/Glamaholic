@@ -2,7 +2,7 @@
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using System;
 
 namespace Glamaholic {
@@ -68,10 +68,11 @@ namespace Glamaholic {
         }
 
         internal static PlateSlot? GetSlot(Item item) {
-            var category = item.EquipSlotCategory.Value;
-            if (category == null) {
+            if (!item.EquipSlotCategory.IsValid) {
                 return null;
             }
+
+            var category = item.EquipSlotCategory.Value;
 
             if (category.MainHand > 0) {
                 return PlateSlot.MainHand;
@@ -178,7 +179,7 @@ namespace Glamaholic {
 
         // https://github.com/ufx/GarlandTools/blob/5b2ec54dc792175a1d565fddb6c6b975b9a9ff64/Garland.Data/Hacks.cs#L89
         internal static bool IsItemSkipped(Item item) {
-            var name = item.Name.RawString;
+            var name = item.Name.ExtractText();
             return item.RowId switch {
                 // Dated Radz-at-Han Coin
                 17557 => false,

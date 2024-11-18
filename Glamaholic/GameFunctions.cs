@@ -7,6 +7,7 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using Lumina.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -101,7 +102,12 @@ namespace Glamaholic {
             if (!agent->IsAddonReady() || agent->Data == null)
                 return;
 
-            if (agent->Data->UsedSlots == _dresserItemSlotsUsed)
+            // TODO move back to agent-Data->UsedSlots once CS has updated
+            //if (agent->Data->UsedSlots == _dresserItemSlotsUsed)
+            //    return;
+
+            ushort* usedSlots = (ushort*) ((nint) agent->Data + 0x10B460);
+            if (*usedSlots == _dresserItemSlotsUsed)
                 return;
 
             _cachedDresserItems.Clear();
@@ -182,12 +188,12 @@ namespace Glamaholic {
         }
 
         internal unsafe bool IsInArmoire(uint itemId) {
-            var row = Service.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Cabinet>()!.FirstOrDefault(row => row.Item.Row == itemId);
+            var row = Service.DataManager.GetExcelSheet<Lumina.Excel.Sheets.Cabinet>()!.FirstOrNull(row => row.Item.RowId == itemId);
             if (row == null) {
                 return false;
             }
 
-            return this.Armoire->IsItemInCabinet((int) row.RowId);
+            return this.Armoire->IsItemInCabinet((int) row.Value.RowId);
         }
 
         internal unsafe void LoadPlate(SavedPlate plate) {
@@ -325,15 +331,15 @@ namespace Glamaholic {
 
         private unsafe InventoryItem* SelectStainItem(byte stainId, Dictionary<(uint, uint), uint> usedStains, out uint bestItemId) {
             var inventory = InventoryManager.Instance();
-            var transient = Service.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.StainTransient>()!.GetRow(stainId);
+            var transient = Service.DataManager.GetExcelSheet<Lumina.Excel.Sheets.StainTransient>()!.GetRowOrDefault(stainId);
 
             InventoryItem* item = null;
 
-            bestItemId = transient?.Item1?.Value?.RowId ?? (transient?.Item2?.Value?.RowId ?? 0);
+            bestItemId = transient?.Item1.ValueNullable?.RowId ?? (transient?.Item2.ValueNullable?.RowId ?? 0);
 
-            var items = new[] { transient?.Item1?.Value, transient?.Item2?.Value };
+            var items = new[] { transient?.Item1.ValueNullable, transient?.Item2.ValueNullable };
             foreach (var dyeItem in items) {
-                if (dyeItem == null || dyeItem.RowId == 0) {
+                if (dyeItem == null || dyeItem.Value.RowId == 0) {
                     continue;
                 }
 
@@ -347,7 +353,7 @@ namespace Glamaholic {
                         var address = ((uint) type, (uint) i);
                         var invItem = inv->Items[i];
 
-                        if (invItem.ItemId != dyeItem.RowId) {
+                        if (invItem.ItemId != dyeItem.Value.RowId) {
                             continue;
                         }
 
