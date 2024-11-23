@@ -1,4 +1,4 @@
-﻿using Dalamud.Game.Text;
+using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Plugin.Services;
@@ -306,11 +306,18 @@ namespace Glamaholic {
                 // TODO
                 if (item.Stain1 != info.Item3 || item.Stain2 != info.Item4) {
                     // mirage in dresser did not have stain for this item, so apply it
+                    Plugin.LogTroubleshooting($"Applying stains to {slot}: {item.Stain1}, {item.Stain2}");
 
                     uint previousContextSlot = data->ContextMenuItemIndex;
                     data->ContextMenuItemIndex = (uint) slot;
-                    Plugin.LogTroubleshooting($"Applying stains to {slot}: {item.Stain1}, {item.Stain2}");
+
+                    // item loading for plates is deferred as of patch 7.1
+                    // so we must set the flags ourselves in order to activate the second dye slot immediately
+                    if (item.Stain2 != 0)
+                        data->Items[(int) slot].Flags = 0x20;
+
                     this.ApplyStains(slot, item, usedStains);
+
                     data->ContextMenuItemIndex = previousContextSlot;
                 }
             }

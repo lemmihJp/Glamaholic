@@ -59,6 +59,9 @@ namespace Glamaholic {
         [FieldOffset(0x8)]
         public MirageSource Source;
 
+        [FieldOffset(0x10)]
+        public byte Flags;
+
         [FieldOffset(0x18)]
         public byte Stain1;
 
